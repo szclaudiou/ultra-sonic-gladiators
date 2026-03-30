@@ -1,0 +1,853 @@
+{
+  "bpm": 130,
+  "character": "morgana",
+  "notes": [
+    {
+      "beat": 69,
+      "time": 31.846,
+      "lane": 0,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 71,
+      "time": 32.769,
+      "lane": 0,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 73,
+      "time": 33.692,
+      "lane": 1,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 75,
+      "time": 34.615,
+      "lane": 1,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 77,
+      "time": 35.538,
+      "lane": 2,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 81,
+      "time": 37.385,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 84,
+      "time": 38.769,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 85,
+      "time": 39.231,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 86,
+      "time": 39.692,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 88,
+      "time": 40.615,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 89,
+      "time": 41.077,
+      "lane": 1,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 91,
+      "time": 42.0,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 92,
+      "time": 42.462,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 93,
+      "time": 42.923,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 95,
+      "time": 43.846,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 97,
+      "time": 44.769,
+      "lane": 0,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 97.75,
+      "time": 45.115,
+      "lane": 1,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 99.0,
+      "time": 45.692,
+      "lane": 2,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 99.75,
+      "time": 46.038,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 101.0,
+      "time": 46.615,
+      "lane": 0,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 101.5,
+      "time": 46.846,
+      "lane": 1,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 101.75,
+      "time": 46.962,
+      "lane": 2,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 102.5,
+      "time": 47.308,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 105.5,
+      "time": 48.692,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 113,
+      "time": 52.154,
+      "lane": 0,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 113.75,
+      "time": 52.5,
+      "lane": 1,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 114.5,
+      "time": 52.846,
+      "lane": 2,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 115.25,
+      "time": 53.192,
+      "lane": 3,
+      "type": "normal",
+      "phase": 2
+    },
+    {
+      "beat": 116.0,
+      "time": 53.538,
+      "lane": 0,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 116.75,
+      "time": 53.885,
+      "lane": 1,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 117.75,
+      "time": 54.346,
+      "lane": 2,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 120.25,
+      "time": 55.5,
+      "lane": 3,
+      "type": "accent",
+      "phase": 2
+    },
+    {
+      "beat": 130,
+      "time": 60.0,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 132,
+      "time": 60.923,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 134,
+      "time": 61.846,
+      "lane": 1,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 136,
+      "time": 62.769,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 138,
+      "time": 63.692,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 140,
+      "time": 64.615,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 142,
+      "time": 65.538,
+      "lane": 3,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 144,
+      "time": 66.462,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 146,
+      "time": 67.385,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 148,
+      "time": 68.308,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 150,
+      "time": 69.231,
+      "lane": 1,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 152,
+      "time": 70.154,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 154,
+      "time": 71.077,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 156,
+      "time": 72.0,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 158,
+      "time": 72.923,
+      "lane": 3,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 160,
+      "time": 73.846,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 162,
+      "time": 74.769,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 163,
+      "time": 75.231,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 163.5,
+      "time": 75.462,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 164.0,
+      "time": 75.692,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 165.0,
+      "time": 76.154,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 165.5,
+      "time": 76.385,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 166.0,
+      "time": 76.615,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 167.0,
+      "time": 77.077,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 167.5,
+      "time": 77.308,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 168.0,
+      "time": 77.538,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 169.0,
+      "time": 78.0,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 174,
+      "time": 80.308,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 175,
+      "time": 80.769,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 175.5,
+      "time": 81.0,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 176.0,
+      "time": 81.231,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 177.0,
+      "time": 81.692,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 177.5,
+      "time": 81.923,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 178.0,
+      "time": 82.154,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 179.0,
+      "time": 82.615,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 179.5,
+      "time": 82.846,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 180.0,
+      "time": 83.077,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 181.0,
+      "time": 83.538,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 186,
+      "time": 85.846,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 187,
+      "time": 86.308,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 187.5,
+      "time": 86.538,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 188.0,
+      "time": 86.769,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 189.0,
+      "time": 87.231,
+      "lane": 3,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 189.5,
+      "time": 87.462,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 190.0,
+      "time": 87.692,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 191.0,
+      "time": 88.154,
+      "lane": 2,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 191.5,
+      "time": 88.385,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 192.0,
+      "time": 88.615,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 193.0,
+      "time": 89.077,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 194,
+      "time": 89.538,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 195.5,
+      "time": 90.231,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 196.5,
+      "time": 90.692,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 198,
+      "time": 91.385,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 199.5,
+      "time": 92.077,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 200.5,
+      "time": 92.538,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 202,
+      "time": 93.231,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 203.5,
+      "time": 93.923,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 204.5,
+      "time": 94.385,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 206,
+      "time": 95.077,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 207.5,
+      "time": 95.769,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 208.5,
+      "time": 96.231,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 210,
+      "time": 96.923,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 211.5,
+      "time": 97.615,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 212.5,
+      "time": 98.077,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 214,
+      "time": 98.769,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 215.5,
+      "time": 99.462,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 216.5,
+      "time": 99.923,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 218,
+      "time": 100.615,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 219.5,
+      "time": 101.308,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 220.5,
+      "time": 101.769,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 222,
+      "time": 102.462,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 223.5,
+      "time": 103.154,
+      "lane": 1,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 224.5,
+      "time": 103.615,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 226,
+      "time": 104.308,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 228,
+      "time": 105.231,
+      "lane": 1,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 230,
+      "time": 106.154,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 232,
+      "time": 107.077,
+      "lane": 3,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 234,
+      "time": 108.0,
+      "lane": 0,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 236,
+      "time": 108.923,
+      "lane": 1,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 238,
+      "time": 109.846,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 240,
+      "time": 110.769,
+      "lane": 3,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 242,
+      "time": 111.692,
+      "lane": 2,
+      "type": "accent",
+      "phase": 3
+    },
+    {
+      "beat": 248.0,
+      "time": 114.462,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 249.0,
+      "time": 114.923,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 250.0,
+      "time": 115.385,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 251.0,
+      "time": 115.846,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 252.0,
+      "time": 116.308,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 253.0,
+      "time": 116.769,
+      "lane": 0,
+      "type": "normal",
+      "phase": 3
+    },
+    {
+      "beat": 254,
+      "time": 117.231,
+      "lane": 3,
+      "type": "accent",
+      "phase": 3
+    }
+  ]
+}
