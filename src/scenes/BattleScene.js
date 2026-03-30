@@ -30,13 +30,21 @@ class BattleScene extends Phaser.Scene {
         this.midline.lineStyle(1, 0x4444aa, 0.15);
         this.midline.lineBetween(640, 70, 640, 460);
 
-        // Small character sprites with glow
-        this.playerSprite = this.createCharSprite(280, 320, pChar.color, pChar.colorAlt);
-        this.opponentSprite = this.createCharSprite(1000, 320, oChar.color, oChar.colorAlt);
+        // Pixel art character sprites (upscaled 3x for visibility)
+        const spriteScale = 3;
+        this.playerSprite = this.add.container(270, 330).setDepth(10);
+        const pGlowAura = this.add.circle(0, 0, 55, pChar.color, 0.07);
+        const pSpr = this.add.image(0, 0, pChar.sprite).setScale(spriteScale).setOrigin(0.5);
+        this.playerSprite.add([pGlowAura, pSpr]);
+
+        this.opponentSprite = this.add.container(1010, 330).setDepth(10);
+        const oGlowAura = this.add.circle(0, 0, 60, oChar.color, 0.07);
+        const oSpr = this.add.image(0, 0, oChar.sprite).setScale(spriteScale).setOrigin(0.5);
+        this.opponentSprite.add([oGlowAura, oSpr]);
 
         // Character base glow (ground effect)
-        this.playerGlow = this.add.circle(280, 380, 40, pChar.color, 0.06).setDepth(3);
-        this.opponentGlow = this.add.circle(1000, 380, 40, oChar.color, 0.06).setDepth(3);
+        this.playerGlow = this.add.circle(270, 410, 50, pChar.color, 0.08).setDepth(3);
+        this.opponentGlow = this.add.circle(1010, 410, 55, oChar.color, 0.08).setDepth(3);
 
         // ===== HUD =====
         this.createHUD(pChar, oChar);
@@ -124,21 +132,6 @@ class BattleScene extends Phaser.Scene {
         } else {
             this.showCoinFlip();
         }
-    }
-
-    createCharSprite(x, y, color, colorAlt) {
-        const c = this.add.container(x, y).setDepth(10);
-        // Outer glow aura
-        c.add(this.add.circle(0, 0, 35, color, 0.04));
-        // Inner glow
-        c.add(this.add.circle(0, 0, 22, colorAlt || color, 0.08));
-        // Body
-        c.add(this.add.rectangle(0, 8, 18, 28, color, 0.8).setOrigin(0.5));
-        // Head
-        c.add(this.add.circle(0, -12, 9, color, 0.9));
-        // Eye highlight
-        c.add(this.add.circle(2, -13, 2, 0xffffff, 0.6));
-        return c;
     }
 
     createHUD(pChar, oChar) {

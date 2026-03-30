@@ -10,6 +10,7 @@ const CHARACTERS = {
         colorHex: '#C0C0C0',
         colorAltHex: '#E8E8FF',
         portrait: 'portrait-argentum',
+        sprite: 'sprite-argentum',
         audio: 'audio-argentum',
         beatmap: 'beatmap-argentum',
         soloPhase: 1
@@ -25,6 +26,7 @@ const CHARACTERS = {
         colorHex: '#8B00FF',
         colorAltHex: '#4B0082',
         portrait: 'portrait-morgana',
+        sprite: 'sprite-morgana',
         audio: 'audio-morgana',
         beatmap: 'beatmap-morgana',
         soloPhase: 2

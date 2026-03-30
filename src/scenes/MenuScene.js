@@ -13,6 +13,8 @@ class MenuScene extends Phaser.Scene {
         this.load.audio('audio-morgana', 'assets/audio/morgana.ogg');
         this.load.json('beatmap-argentum', 'assets/audio/beatmap-argentum.json');
         this.load.json('beatmap-morgana', 'assets/audio/beatmap-morgana.json');
+        this.load.image('sprite-argentum', 'assets/sprites/argentum-sprite.png');
+        this.load.image('sprite-morgana', 'assets/sprites/morgana-sprite.png');
     }
 
     create() {
