@@ -65,18 +65,18 @@ class BattleScene extends Phaser.Scene {
         this.beatmapOpponent = this.cache.json.get(oChar.beatmap);
 
         // ===== RHYTHM ENGINES =====
-        // Player's track (bottom)
+        // Player's track (bottom) — 4 lanes, ~150px tall
         this.playerTrack = new RhythmEngine(this, {
-            trackY: 540, trackHeight: 170, hitZoneX: 160, noteSpeed: 420,
+            trackY: 555, trackHeight: 155, hitZoneX: 160, noteSpeed: 420,
             color: pChar.color, colorHex: pChar.colorHex,
             depth: 100,
             onHit: (rating, note) => this.onPlayerHit(rating, note),
             onMiss: (note) => this.onPlayerMiss(note)
         });
 
-        // AI opponent track (above player's, only visible in Phase 3)
+        // AI opponent track (above player's) — same 4 lanes, same height
         this.aiTrack = new RhythmEngine(this, {
-            trackY: 460, trackHeight: 70, hitZoneX: 160, noteSpeed: 380,
+            trackY: 465, trackHeight: 85, hitZoneX: 160, noteSpeed: 380,
             color: oChar.color, colorHex: oChar.colorHex,
             isAI: true, label: oChar.name,
             depth: 95,

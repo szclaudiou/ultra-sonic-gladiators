@@ -36,13 +36,13 @@ class GameParticleSystem {
             : Phaser.Math.Between(this.midX + 40, this.bounds.x + this.bounds.width - 20);
         const y = Phaser.Math.Between(this.bounds.y + 10, this.bounds.y + this.bounds.height - 10);
 
-        // Core dot (small, dim)
-        const dot = this.scene.add.circle(x, y, 3, 0x555566, 0.3);
+        // Core dot — visible but subtle
+        const dot = this.scene.add.circle(x, y, 3.5, 0x667788, 0.4);
         dot.setDepth(52);
         this.container.add(dot);
 
         // Glow halo (hidden until enchanted)
-        const halo = this.scene.add.circle(x, y, 10, 0x555566, 0);
+        const halo = this.scene.add.circle(x, y, 10, 0x667788, 0);
         halo.setDepth(51);
         this.container.add(halo);
 

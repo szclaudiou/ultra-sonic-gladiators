@@ -16,167 +16,159 @@ class ResultScene extends Phaser.Scene {
     }
 
     create() {
-        const playerChar = CHARACTERS[this.playerCharId];
-        const opponentChar = CHARACTERS[this.opponentCharId];
-        const isPlayerWinner = this.winner === 'player';
-        const winnerChar = isPlayerWinner ? playerChar : opponentChar;
-        const loserChar = isPlayerWinner ? opponentChar : playerChar;
+        const pChar = CHARACTERS[this.playerCharId];
+        const oChar = CHARACTERS[this.opponentCharId];
+        const isWin = this.winner === 'player';
+        const winnerChar = isWin ? pChar : oChar;
 
-        // Background
-        this.add.image(640, 360, 'arena-bg').setDisplaySize(1280, 720).setAlpha(0.3);
-        this.add.rectangle(640, 360, 1280, 720, 0x0a0a1a, 0.7);
+        // Full opaque background (prevents bleed-through)
+        this.add.rectangle(640, 360, 1280, 720, 0x050510);
+        this.add.image(640, 360, 'arena-bg').setDisplaySize(1280, 720).setAlpha(0.2);
+        this.add.rectangle(640, 360, 1280, 720, 0x0a0a1a, 0.6);
 
-        // Victory/Defeat banner
-        const bannerText = isPlayerWinner ? 'VICTORY' : 'DEFEAT';
-        const bannerColor = isPlayerWinner ? '#ffcc00' : '#ff3333';
-        this.add.text(640, 60, bannerText, {
-            fontSize: '64px',
+        // Banner
+        const bannerText = isWin ? 'VICTORY' : 'DEFEAT';
+        const bannerColor = isWin ? '#ffcc00' : '#ff3333';
+        this.add.text(640, 55, bannerText, {
+            fontSize: '56px',
             fontFamily: 'Arial Black, Impact, sans-serif',
             fontStyle: 'bold',
             color: bannerColor,
             stroke: '#000000',
-            strokeThickness: 4
+            strokeThickness: 5
         }).setOrigin(0.5);
 
-        // Winner portrait (large)
-        const winnerPortrait = this.add.image(640, 220, winnerChar.portrait)
-            .setDisplaySize(160, 160);
-        const winnerGlow = this.add.graphics();
-        winnerGlow.lineStyle(4, winnerChar.color, 1);
-        winnerGlow.strokeCircle(640, 220, 85);
+        // Winner portrait
+        this.add.image(640, 195, winnerChar.portrait).setDisplaySize(140, 140);
+        const ring = this.add.graphics();
+        ring.lineStyle(3, winnerChar.color, 1);
+        ring.strokeCircle(640, 195, 75);
 
-        this.add.text(640, 315, winnerChar.name + ' WINS!', {
-            fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: winnerChar.colorHex
-        }).setOrigin(0.5);
-
-        // Final HP bars
-        const barY = 370;
-        this.add.text(200, barY - 15, playerChar.name, {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: playerChar.colorHex
-        }).setOrigin(0.5);
-        this.add.rectangle(200, barY + 5, 200, 12, 0x333333).setOrigin(0.5);
-        const pHPRatio = Math.max(0, this.playerHP) / 1000;
-        this.add.rectangle(200 - 100 + 100 * pHPRatio, barY + 5, 200 * pHPRatio, 12, playerChar.color).setOrigin(0.5);
-        this.add.text(200, barY + 22, this.playerHP + ' HP', {
-            fontSize: '12px', fontFamily: 'monospace', color: '#aaaacc'
+        this.add.text(640, 280, winnerChar.name + ' WINS!', {
+            fontSize: '26px', fontFamily: 'Arial', fontStyle: 'bold', color: winnerChar.colorHex
         }).setOrigin(0.5);
 
-        this.add.text(1080, barY - 15, opponentChar.name, {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: opponentChar.colorHex
+        // HP comparison
+        const barW = 200, barH = 12, barY = 325;
+        // Player HP
+        this.add.text(200, barY - 18, pChar.name, {
+            fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold', color: pChar.colorHex
         }).setOrigin(0.5);
-        this.add.rectangle(1080, barY + 5, 200, 12, 0x333333).setOrigin(0.5);
-        const oHPRatio = Math.max(0, this.opponentHP) / 1000;
-        this.add.rectangle(1080 - 100 + 100 * oHPRatio, barY + 5, 200 * oHPRatio, 12, opponentChar.color).setOrigin(0.5);
-        this.add.text(1080, barY + 22, this.opponentHP + ' HP', {
-            fontSize: '12px', fontFamily: 'monospace', color: '#aaaacc'
+        this.add.rectangle(200, barY, barW, barH, 0x222233).setOrigin(0.5);
+        const pRatio = Math.max(0, this.playerHP) / 1000;
+        if (pRatio > 0) {
+            this.add.rectangle(200 - barW/2, barY, barW * pRatio, barH, pChar.color).setOrigin(0, 0.5);
+        }
+        this.add.text(200, barY + 18, Math.max(0, Math.round(this.playerHP)) + ' HP', {
+            fontSize: '11px', fontFamily: 'monospace', color: '#aaaacc'
         }).setOrigin(0.5);
 
-        // Player stats
+        // Opponent HP
+        this.add.text(1080, barY - 18, oChar.name, {
+            fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold', color: oChar.colorHex
+        }).setOrigin(0.5);
+        this.add.rectangle(1080, barY, barW, barH, 0x222233).setOrigin(0.5);
+        const oRatio = Math.max(0, this.opponentHP) / 1000;
+        if (oRatio > 0) {
+            this.add.rectangle(1080 - barW/2, barY, barW * oRatio, barH, oChar.color).setOrigin(0, 0.5);
+        }
+        this.add.text(1080, barY + 18, Math.max(0, Math.round(this.opponentHP)) + ' HP', {
+            fontSize: '11px', fontFamily: 'monospace', color: '#aaaacc'
+        }).setOrigin(0.5);
+
+        // Stats
         const r = this.playerResults;
-        const totalNotes = (r.perfect || 0) + (r.great || 0) + (r.good || 0) + (r.miss || 0);
-        const accuracy = totalNotes > 0
-            ? Math.round(((r.perfect || 0) + (r.great || 0) * 0.8 + (r.good || 0) * 0.5) / totalNotes * 100)
+        const total = (r.perfect || 0) + (r.great || 0) + (r.good || 0) + (r.miss || 0);
+        const acc = total > 0
+            ? Math.round(((r.perfect || 0) + (r.great || 0) * 0.8 + (r.good || 0) * 0.5) / total * 100)
             : 0;
 
-        const statsY = 430;
-        this.add.text(640, statsY, 'YOUR STATS', {
-            fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
+        this.add.text(640, 385, 'YOUR PERFORMANCE', {
+            fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
         }).setOrigin(0.5);
 
-        const statLines = [
-            ['Total Notes', totalNotes],
+        const stats = [
+            ['Notes Hit', `${(r.perfect||0)+(r.great||0)+(r.good||0)} / ${total}`],
             ['Perfect', r.perfect || 0],
             ['Great', r.great || 0],
             ['Good', r.good || 0],
             ['Miss', r.miss || 0],
             ['Max Combo', r.maxCombo || 0],
-            ['Accuracy', accuracy + '%'],
-            ['Particles Enchanted', this.playerEnchanted],
+            ['Accuracy', acc + '%'],
+            ['Particles', this.playerEnchanted + ' enchanted'],
             ['Score', r.score || 0]
         ];
 
-        const colX = [520, 760];
-        statLines.forEach((stat, i) => {
-            const y = statsY + 30 + Math.floor(i / 1) * 22;
-            this.add.text(colX[0], y, stat[0], {
-                fontSize: '14px', fontFamily: 'monospace', color: '#8888aa'
+        const leftCol = 480, rightCol = 800;
+        stats.forEach((stat, i) => {
+            const y = 415 + i * 22;
+            this.add.text(leftCol, y, stat[0], {
+                fontSize: '13px', fontFamily: 'monospace', color: '#7777aa'
             }).setOrigin(0, 0.5);
-            this.add.text(colX[1], y, '' + stat[1], {
-                fontSize: '14px', fontFamily: 'monospace', color: '#ffffff'
+            this.add.text(rightCol, y, '' + stat[1], {
+                fontSize: '13px', fontFamily: 'monospace', color: '#ffffff'
             }).setOrigin(1, 0.5);
         });
 
         // Buttons
-        const btnY = 670;
-        this.createButton(480, btnY, 'REMATCH', () => {
+        this.createButton(440, 660, 'REMATCH', () => {
             this.scene.start('BattleScene', {
                 player: this.playerCharId,
                 opponent: this.opponentCharId
             });
         });
-
-        this.createButton(800, btnY, 'MENU', () => {
+        this.createButton(840, 660, 'MENU', () => {
             this.scene.start('MenuScene');
         });
 
         // Ambient particles
-        this.ambientParticles = [];
-        for (let i = 0; i < 40; i++) {
-            const color = Math.random() > 0.5 ? winnerChar.color : 0xffffff;
+        this.floaters = [];
+        for (let i = 0; i < 30; i++) {
+            const color = Math.random() > 0.5 ? winnerChar.color : 0x666688;
             const p = this.add.circle(
-                Math.random() * 1280,
-                Math.random() * 720,
-                2 + Math.random() * 3,
-                color,
-                0.3 + Math.random() * 0.4
+                Math.random() * 1280, Math.random() * 720,
+                2 + Math.random() * 2, color, 0.25 + Math.random() * 0.3
             );
-            this.ambientParticles.push({
-                sprite: p,
-                vy: -0.3 - Math.random() * 0.5,
-                phase: Math.random() * Math.PI * 2
-            });
+            this.floaters.push({ sprite: p, vy: -0.2 - Math.random() * 0.4, phase: Math.random() * 6.28 });
         }
     }
 
-    createButton(x, y, text, callback) {
-        const w = 180, h = 44;
+    createButton(x, y, text, cb) {
+        const w = 200, h = 48;
         const bg = this.add.graphics();
-        bg.fillStyle(0x4B0082, 0.8);
-        bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+        bg.fillStyle(0x4B0082, 0.85);
+        bg.fillRoundedRect(x - w/2, y - h/2, w, h, 10);
         bg.lineStyle(2, 0x8B00FF, 1);
-        bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+        bg.strokeRoundedRect(x - w/2, y - h/2, w, h, 10);
 
-        const label = this.add.text(x, y, text, {
+        this.add.text(x, y, text, {
             fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
         }).setOrigin(0.5);
 
-        const hitArea = this.add.rectangle(x, y, w, h).setInteractive({ useHandCursor: true }).setAlpha(0.001);
-        hitArea.on('pointerover', () => {
+        const zone = this.add.zone(x, y, w, h).setInteractive({ useHandCursor: true });
+        zone.on('pointerover', () => {
             bg.clear();
             bg.fillStyle(0x6B20A2, 0.9);
-            bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+            bg.fillRoundedRect(x - w/2, y - h/2, w, h, 10);
             bg.lineStyle(2, 0xC0C0C0, 1);
-            bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+            bg.strokeRoundedRect(x - w/2, y - h/2, w, h, 10);
         });
-        hitArea.on('pointerout', () => {
+        zone.on('pointerout', () => {
             bg.clear();
-            bg.fillStyle(0x4B0082, 0.8);
-            bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+            bg.fillStyle(0x4B0082, 0.85);
+            bg.fillRoundedRect(x - w/2, y - h/2, w, h, 10);
             bg.lineStyle(2, 0x8B00FF, 1);
-            bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 8);
+            bg.strokeRoundedRect(x - w/2, y - h/2, w, h, 10);
         });
-        hitArea.on('pointerdown', callback);
+        zone.on('pointerdown', cb);
     }
 
-    update(time) {
-        for (const p of this.ambientParticles) {
-            p.phase += 0.01;
-            p.sprite.x += Math.sin(p.phase) * 0.3;
-            p.sprite.y += p.vy;
-            if (p.sprite.y < -10) {
-                p.sprite.y = 730;
-                p.sprite.x = Math.random() * 1280;
-            }
+    update() {
+        for (const f of this.floaters) {
+            f.phase += 0.008;
+            f.sprite.x += Math.sin(f.phase) * 0.25;
+            f.sprite.y += f.vy;
+            if (f.sprite.y < -10) { f.sprite.y = 730; f.sprite.x = Math.random() * 1280; }
         }
     }
 }
