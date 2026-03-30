@@ -6,7 +6,7 @@ class GameParticleSystem {
         this.opponentColor = config.opponentColor || 0x8B00FF;
         this.playerColorAlt = config.playerColorAlt || 0xE8E8FF;
         this.opponentColorAlt = config.opponentColorAlt || 0x4B0082;
-        this.totalPerSide = config.totalPerSide || 65;
+        this.totalPerSide = config.totalPerSide || 90;
 
         // Arena bounds (above rhythm tracks)
         this.bounds = { x: 30, y: 70, width: 1220, height: 380 };

@@ -25,6 +25,31 @@ class BattleScene extends Phaser.Scene {
         vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.5, 0.5);
         vig.fillRect(0, 640, 1280, 80);
 
+        // Spectator glow — animated crowd dots at the arena edges
+        this.spectators = [];
+        for (let i = 0; i < 60; i++) {
+            // Arrange in curved rows suggesting stadium seating
+            const angle = (i / 60) * Math.PI + Math.PI * 0.1;
+            const r = 580 + Math.random() * 100;
+            const cx = 640 + Math.cos(angle) * r * 0.6;
+            const cy = 60 + Math.sin(angle) * r * 0.15 - Math.random() * 30;
+            const colors = [0x4444ff, 0xff4444, 0xffff44, 0x44ff44, 0xff44ff];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const dot = this.add.circle(cx, cy, 1.5 + Math.random(), color, 0.3 + Math.random() * 0.4).setDepth(1);
+            this.spectators.push({ dot, phase: Math.random() * Math.PI * 2, baseAlpha: 0.3 + Math.random() * 0.3 });
+        }
+
+        // Spotlight beams from above (subtle)
+        const lights = this.add.graphics().setDepth(2);
+        lights.fillStyle(0xffffff, 0.015);
+        lights.fillTriangle(200, 0, 260, 0, 280, 460);
+        lights.fillStyle(0xffffff, 0.012);
+        lights.fillTriangle(550, 0, 620, 0, 640, 460);
+        lights.fillStyle(0xffffff, 0.012);
+        lights.fillTriangle(660, 0, 730, 0, 640, 460);
+        lights.fillStyle(0xffffff, 0.015);
+        lights.fillTriangle(1020, 0, 1080, 0, 1000, 460);
+
         // Midline energy (animated in Phase 3)
         this.midline = this.add.graphics().setDepth(5);
         this.midline.lineStyle(1, 0x4444aa, 0.15);
@@ -69,7 +94,7 @@ class BattleScene extends Phaser.Scene {
             opponentColor: oChar.color,
             playerColorAlt: pChar.colorAlt,
             opponentColorAlt: oChar.colorAlt,
-            totalPerSide: 65
+            totalPerSide: 90
         });
 
         // ===== BEAT MAPS =====
@@ -86,9 +111,9 @@ class BattleScene extends Phaser.Scene {
             onMiss: (note) => this.onPlayerMiss(note)
         });
 
-        // AI opponent track (above player's) — same 4 lanes, same height
+        // AI opponent track — will expand in Phase 2 when player track is hidden
         this.aiTrack = new RhythmEngine(this, {
-            trackY: 465, trackHeight: 85, hitZoneX: 160, noteSpeed: 380,
+            trackY: 462, trackHeight: 88, hitZoneX: 160, noteSpeed: 380,
             color: oChar.color, colorHex: oChar.colorHex,
             isAI: true, label: oChar.name,
             depth: 95,
@@ -369,6 +394,9 @@ class BattleScene extends Phaser.Scene {
             this.phaseText.setText('⚔ THE CLASH ⚔');
             this.showPhaseTransition('THE CLASH');
 
+            // Spectators go wild — all light up
+            this.spectators.forEach(s => { s.baseAlpha = Math.min(0.8, s.baseAlpha * 2); });
+
             // Both tracks visible at full opacity
             this.playerTrack.setVisible(true);
             this.playerTrack.container.setAlpha(1);
@@ -642,6 +670,12 @@ class BattleScene extends Phaser.Scene {
             }
         }
 
+        // Animate spectators
+        for (const s of this.spectators) {
+            s.phase += 0.02;
+            s.dot.setAlpha(s.baseAlpha + Math.sin(s.phase) * 0.15);
+        }
+
         // Beat pulse
         const beatNum = Math.floor(this.musicTime / this.beatInterval);
         const lastBeatNum = Math.floor(this.lastBeatTime / this.beatInterval);
@@ -649,6 +683,11 @@ class BattleScene extends Phaser.Scene {
             this.gameParticles.pulseBeat();
             this.playerTrack.pulseBeat();
             this.aiTrack.pulseBeat();
+            // Spectator cheer flash on beat
+            const cheerIdx = Math.floor(Math.random() * this.spectators.length * 0.3);
+            for (let ci = cheerIdx; ci < cheerIdx + 8 && ci < this.spectators.length; ci++) {
+                this.spectators[ci].dot.setAlpha(0.9);
+            }
 
             // Phase 3: midline energy pulses
             if (phase === 3) {
