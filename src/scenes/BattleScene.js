@@ -30,21 +30,21 @@ class BattleScene extends Phaser.Scene {
         this.midline.lineStyle(1, 0x4444aa, 0.15);
         this.midline.lineBetween(640, 70, 640, 460);
 
-        // Pixel art character sprites (upscaled 3x for visibility)
-        const spriteScale = 3;
-        this.playerSprite = this.add.container(270, 330).setDepth(10);
-        const pGlowAura = this.add.circle(0, 0, 55, pChar.color, 0.07);
+        // Pixel art character sprites — small arena figures
+        const spriteScale = 2;
+        this.playerSprite = this.add.container(220, 370).setDepth(10);
+        const pGlowAura = this.add.circle(0, 0, 40, pChar.color, 0.07);
         const pSpr = this.add.image(0, 0, pChar.sprite).setScale(spriteScale).setOrigin(0.5);
         this.playerSprite.add([pGlowAura, pSpr]);
 
-        this.opponentSprite = this.add.container(1010, 330).setDepth(10);
-        const oGlowAura = this.add.circle(0, 0, 60, oChar.color, 0.07);
+        this.opponentSprite = this.add.container(1060, 370).setDepth(10);
+        const oGlowAura = this.add.circle(0, 0, 45, oChar.color, 0.07);
         const oSpr = this.add.image(0, 0, oChar.sprite).setScale(spriteScale).setOrigin(0.5);
         this.opponentSprite.add([oGlowAura, oSpr]);
 
         // Character base glow (ground effect)
-        this.playerGlow = this.add.circle(270, 410, 50, pChar.color, 0.08).setDepth(3);
-        this.opponentGlow = this.add.circle(1010, 410, 55, oChar.color, 0.08).setDepth(3);
+        this.playerGlow = this.add.circle(220, 420, 40, pChar.color, 0.07).setDepth(3);
+        this.opponentGlow = this.add.circle(1060, 420, 45, oChar.color, 0.07).setDepth(3);
 
         // ===== HUD =====
         this.createHUD(pChar, oChar);
