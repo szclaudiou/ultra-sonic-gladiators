@@ -9,181 +9,185 @@ class BattleScene extends Phaser.Scene {
     }
 
     create() {
-        const playerChar = CHARACTERS[this.playerCharId];
-        const opponentChar = CHARACTERS[this.opponentCharId];
+        const pChar = CHARACTERS[this.playerCharId];
+        const oChar = CHARACTERS[this.opponentCharId];
+        this.pChar = pChar;
+        this.oChar = oChar;
 
-        // Arena background
+        // ===== ARENA BACKGROUND =====
         this.add.image(640, 360, 'arena-bg').setDisplaySize(1280, 720);
-        this.add.rectangle(640, 360, 1280, 720, 0x000022, 0.3);
+        // Dark overlay for depth
+        this.add.rectangle(640, 360, 1280, 720, 0x000022, 0.35);
+        // Vignette edges
+        const vig = this.add.graphics().setDepth(2);
+        vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0.7, 0, 0);
+        vig.fillRect(0, 0, 1280, 80);
+        vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.5, 0.5);
+        vig.fillRect(0, 640, 1280, 80);
 
-        // Midline divider
-        const midline = this.add.graphics().setDepth(5);
-        midline.lineStyle(1, 0x4444aa, 0.3);
-        midline.lineBetween(640, 60, 640, 480);
+        // Midline energy (subtle)
+        const midGfx = this.add.graphics().setDepth(5);
+        midGfx.lineStyle(1, 0x4444aa, 0.15);
+        midGfx.lineBetween(640, 70, 640, 460);
 
-        // Small character sprites (simple geometric shapes in the arena)
-        this.playerSprite = this.createCharSprite(280, 300, playerChar.color);
-        this.opponentSprite = this.createCharSprite(1000, 300, opponentChar.color);
+        // Small character sprites
+        this.playerSprite = this.createCharSprite(280, 320, pChar.color);
+        this.opponentSprite = this.createCharSprite(1000, 320, oChar.color);
 
-        // --- HUD ---
-        this.createHUD(playerChar, opponentChar);
+        // ===== HUD =====
+        this.createHUD(pChar, oChar);
 
-        // --- Audio Manager ---
+        // ===== AUDIO MANAGER =====
         this.audioManager = new AudioManager(this);
-        this.audioManager.addTrack(this.playerCharId, playerChar.audio);
-        this.audioManager.addTrack(this.opponentCharId, opponentChar.audio);
+        this.audioManager.addTrack(this.playerCharId, pChar.audio, 0);
+        this.audioManager.addTrack(this.opponentCharId, oChar.audio, 0);
 
-        // --- Battle Manager ---
+        // ===== BATTLE MANAGER =====
         this.battleManager = new BattleManager(this, {
-            playerChar: playerChar,
-            opponentChar: opponentChar,
+            playerChar: pChar,
+            opponentChar: oChar,
             onPhaseChange: (phase) => this.onPhaseChange(phase),
             onBattleEnd: (winner) => this.onBattleEnd(winner),
             onDamage: (attacker, damage) => this.onDamage(attacker, damage)
         });
 
-        // --- Particle System ---
+        // ===== PARTICLE SYSTEM =====
         this.gameParticles = new GameParticleSystem(this, {
-            playerColor: playerChar.color,
-            opponentColor: opponentChar.color,
-            playerColorAlt: playerChar.colorAlt,
-            opponentColorAlt: opponentChar.colorAlt,
-            totalPerSide: 50
+            playerColor: pChar.color,
+            opponentColor: oChar.color,
+            playerColorAlt: pChar.colorAlt,
+            opponentColorAlt: oChar.colorAlt,
+            totalPerSide: 65
         });
 
-        // --- Rhythm Engine(s) ---
-        const beatmapPlayer = this.cache.json.get(playerChar.beatmap);
-        const beatmapOpponent = this.cache.json.get(opponentChar.beatmap);
+        // ===== BEAT MAPS =====
+        this.beatmapPlayer = this.cache.json.get(pChar.beatmap);
+        this.beatmapOpponent = this.cache.json.get(oChar.beatmap);
 
-        // Primary rhythm track (always visible)
-        this.rhythmEngine = new RhythmEngine(this, {
-            trackY: 510,
-            trackHeight: 200,
-            hitZoneX: 150,
-            noteSpeed: 500,
-            color: playerChar.color,
-            trackId: 'primary',
+        // ===== RHYTHM ENGINES =====
+        // Player's track (bottom)
+        this.playerTrack = new RhythmEngine(this, {
+            trackY: 540, trackHeight: 170, hitZoneX: 160, noteSpeed: 420,
+            color: pChar.color, colorHex: pChar.colorHex,
+            depth: 100,
             onHit: (rating, note) => this.onPlayerHit(rating, note),
             onMiss: (note) => this.onPlayerMiss(note)
         });
 
-        // Secondary track for Phase 3 (opponent's notes, auto-played)
-        this.rhythmEngineSecondary = null;
+        // AI opponent track (above player's, only visible in Phase 3)
+        this.aiTrack = new RhythmEngine(this, {
+            trackY: 460, trackHeight: 70, hitZoneX: 160, noteSpeed: 380,
+            color: oChar.color, colorHex: oChar.colorHex,
+            isAI: true, label: oChar.name,
+            depth: 95,
+            onHit: (rating, note) => this.onAIHit(rating, note),
+            onMiss: (note) => {}
+        });
+        this.aiTrack.setVisible(false);
 
-        // Store beatmaps
-        this.beatmapPlayer = beatmapPlayer;
-        this.beatmapOpponent = beatmapOpponent;
-        this.playerChar = playerChar;
-        this.opponentChar = opponentChar;
-
-        // --- Input ---
+        // ===== INPUT =====
         this.setupInput();
 
-        // --- Coin flip intro ---
-        this.showCoinFlip();
-
-        // State
+        // ===== STATE =====
         this.battleStarted = false;
         this.musicTime = 0;
         this.stealCooldown = 0;
-
-        // Beat tracking for particle pulse
-        this.lastBeatTime = 0;
         this.BPM = 130;
         this.beatInterval = 60 / this.BPM;
+        this.lastBeatTime = 0;
+        this.currentPhase = 0;
+        this.aiNotes = []; // scheduled AI auto-play
+        this.aiProcessed = new Set();
 
-        // Opponent AI for Phase 3 auto-play
-        this.opponentAutoResults = { perfect: 0, great: 0, good: 0, miss: 0, combo: 0, maxCombo: 0 };
+        // ===== COIN FLIP =====
+        this.showCoinFlip();
     }
 
     createCharSprite(x, y, color) {
-        const container = this.add.container(x, y).setDepth(10);
-
-        // Simple geometric character: body + head
-        const body = this.add.rectangle(0, 10, 20, 30, color, 0.8);
-        const head = this.add.circle(0, -12, 10, color, 0.9);
-        const glow = this.add.circle(0, 0, 30, color, 0.1);
-
-        container.add([glow, body, head]);
-        return container;
+        const c = this.add.container(x, y).setDepth(10);
+        // Glow
+        c.add(this.add.circle(0, 0, 28, color, 0.06));
+        // Body
+        c.add(this.add.rectangle(0, 8, 16, 26, color, 0.7).setOrigin(0.5));
+        // Head
+        c.add(this.add.circle(0, -10, 8, color, 0.85));
+        return c;
     }
 
-    createHUD(playerChar, opponentChar) {
-        const hud = this.add.container(0, 0).setDepth(200);
+    createHUD(pChar, oChar) {
+        const hudDepth = 200;
 
-        // Player portrait (top-left)
-        const pPortrait = this.add.image(45, 35, playerChar.portrait)
-            .setDisplaySize(50, 50);
-        const pCircle = this.add.graphics();
-        pCircle.lineStyle(3, playerChar.color, 1);
-        pCircle.strokeCircle(45, 35, 28);
-        hud.add([pPortrait, pCircle]);
+        // ---- LEFT (Player) ----
+        // Portrait circle
+        const pPort = this.add.image(42, 32, pChar.portrait).setDisplaySize(48, 48).setDepth(hudDepth);
+        const pRing = this.add.graphics().setDepth(hudDepth);
+        pRing.lineStyle(2.5, pChar.color, 0.9);
+        pRing.strokeCircle(42, 32, 27);
 
-        // Player name
-        hud.add(this.add.text(80, 10, playerChar.name, {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: playerChar.colorHex
-        }));
+        // Name
+        this.add.text(78, 10, pChar.name, {
+            fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold', color: pChar.colorHex
+        }).setDepth(hudDepth);
 
-        // Player HP bar
-        this.playerHPBg = this.add.rectangle(250, 38, 300, 16, 0x333333).setOrigin(0, 0.5);
-        this.playerHPBar = this.add.rectangle(250, 38, 300, 16, playerChar.color).setOrigin(0, 0.5);
-        this.playerHPText = this.add.text(405, 38, '1000', {
-            fontSize: '12px', fontFamily: 'monospace', color: '#ffffff'
-        }).setOrigin(0.5);
-        hud.add([this.playerHPBg, this.playerHPBar, this.playerHPText]);
+        // HP bar
+        this.playerHPBg = this.add.rectangle(230, 35, 260, 14, 0x222233).setOrigin(0, 0.5).setDepth(hudDepth);
+        this.playerHPBar = this.add.rectangle(230, 35, 260, 14, pChar.color).setOrigin(0, 0.5).setDepth(hudDepth + 1);
+        this.playerHPText = this.add.text(365, 35, '1000', {
+            fontSize: '11px', fontFamily: 'monospace', color: '#ffffff'
+        }).setOrigin(0.5).setDepth(hudDepth + 2);
 
-        // Opponent portrait (top-right)
-        const oPortrait = this.add.image(1235, 35, opponentChar.portrait)
-            .setDisplaySize(50, 50);
-        const oCircle = this.add.graphics();
-        oCircle.lineStyle(3, opponentChar.color, 1);
-        oCircle.strokeCircle(1235, 35, 28);
-        hud.add([oPortrait, oCircle]);
+        // Enchanted count
+        this.playerEnchText = this.add.text(78, 50, '✦ 0', {
+            fontSize: '11px', fontFamily: 'monospace', color: pChar.colorHex
+        }).setDepth(hudDepth).setAlpha(0.7);
 
-        // Opponent name
-        hud.add(this.add.text(1200, 10, opponentChar.name, {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: opponentChar.colorHex
-        }).setOrigin(1, 0));
+        // ---- RIGHT (Opponent) ----
+        const oPort = this.add.image(1238, 32, oChar.portrait).setDisplaySize(48, 48).setDepth(hudDepth);
+        const oRing = this.add.graphics().setDepth(hudDepth);
+        oRing.lineStyle(2.5, oChar.color, 0.9);
+        oRing.strokeCircle(1238, 32, 27);
 
-        // Opponent HP bar
-        this.opponentHPBg = this.add.rectangle(730, 38, 300, 16, 0x333333).setOrigin(0, 0.5);
-        this.opponentHPBar = this.add.rectangle(1030, 38, 300, 16, opponentChar.color).setOrigin(1, 0.5);
-        this.opponentHPText = this.add.text(875, 38, '1000', {
-            fontSize: '12px', fontFamily: 'monospace', color: '#ffffff'
-        }).setOrigin(0.5);
-        hud.add([this.opponentHPBg, this.opponentHPBar, this.opponentHPText]);
+        this.add.text(1202, 10, oChar.name, {
+            fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold', color: oChar.colorHex
+        }).setOrigin(1, 0).setDepth(hudDepth);
 
-        // Phase indicator
-        this.phaseText = this.add.text(640, 35, '', {
-            fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
-        }).setOrigin(0.5).setDepth(200);
+        this.opponentHPBg = this.add.rectangle(790, 35, 260, 14, 0x222233).setOrigin(0, 0.5).setDepth(hudDepth);
+        this.opponentHPBar = this.add.rectangle(1050, 35, 260, 14, oChar.color).setOrigin(1, 0.5).setDepth(hudDepth + 1);
+        this.opponentHPText = this.add.text(915, 35, '1000', {
+            fontSize: '11px', fontFamily: 'monospace', color: '#ffffff'
+        }).setOrigin(0.5).setDepth(hudDepth + 2);
 
-        // Enchanted particle counts
-        this.playerEnchText = this.add.text(80, 55, 'Enchanted: 0/50', {
-            fontSize: '11px', fontFamily: 'monospace', color: '#aaaacc'
-        }).setDepth(200);
-        this.opponentEnchText = this.add.text(1200, 55, 'Enchanted: 0/50', {
-            fontSize: '11px', fontFamily: 'monospace', color: '#aaaacc'
-        }).setOrigin(1, 0).setDepth(200);
+        this.opponentEnchText = this.add.text(1202, 50, '✦ 0', {
+            fontSize: '11px', fontFamily: 'monospace', color: oChar.colorHex
+        }).setOrigin(1, 0).setDepth(hudDepth).setAlpha(0.7);
+
+        // ---- CENTER: Phase indicator ----
+        this.phaseText = this.add.text(640, 32, '', {
+            fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
+        }).setOrigin(0.5).setDepth(hudDepth);
+
+        // Timer
+        this.timerText = this.add.text(640, 54, '', {
+            fontSize: '12px', fontFamily: 'monospace', color: '#888899'
+        }).setOrigin(0.5).setDepth(hudDepth);
     }
 
     setupInput() {
         // Keyboard: D, F, J, K
-        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyF = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
-        this.keyJ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
-        this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+        const keys = [
+            Phaser.Input.Keyboard.KeyCodes.D,
+            Phaser.Input.Keyboard.KeyCodes.F,
+            Phaser.Input.Keyboard.KeyCodes.J,
+            Phaser.Input.Keyboard.KeyCodes.K
+        ];
+        keys.forEach((code, lane) => {
+            this.input.keyboard.addKey(code).on('down', () => this.handleLaneInput(lane));
+        });
 
-        this.keyD.on('down', () => this.handleLaneInput(0));
-        this.keyF.on('down', () => this.handleLaneInput(1));
-        this.keyJ.on('down', () => this.handleLaneInput(2));
-        this.keyK.on('down', () => this.handleLaneInput(3));
-
-        // Mobile touch zones
-        const trackY = 510;
-        const laneH = 50;
+        // Mobile touch: 4 zones across bottom
+        const zoneW = 320;
         for (let i = 0; i < 4; i++) {
-            const zone = this.add.rectangle(640, trackY + i * laneH + laneH / 2, 1280, laneH)
+            const zone = this.add.rectangle(i * zoneW + zoneW / 2, 625, zoneW, 190)
                 .setInteractive().setAlpha(0.001).setDepth(150);
             zone.on('pointerdown', () => this.handleLaneInput(i));
         }
@@ -191,281 +195,325 @@ class BattleScene extends Phaser.Scene {
 
     handleLaneInput(lane) {
         if (!this.battleStarted || this.battleManager.battleEnded) return;
-
-        const musicTime = this.audioManager.getMusicTime();
-        this.rhythmEngine.tryHit(lane, musicTime);
-
-        // Flash the lane
-        this.flashLane(lane);
+        const mt = this.audioManager.getMusicTime();
+        this.playerTrack.tryHit(lane, mt);
     }
 
-    flashLane(lane) {
-        const y = 510 + lane * 50 + 25;
-        const flash = this.add.rectangle(150, y, 60, 45, 0xffffff, 0.3).setDepth(105);
-        this.tweens.add({
-            targets: flash,
-            alpha: 0,
-            duration: 150,
-            onComplete: () => flash.destroy()
-        });
-    }
-
+    // ============================
+    // COIN FLIP
+    // ============================
     showCoinFlip() {
         const firstPlayer = this.battleManager.firstPlayer;
-        const firstName = firstPlayer === 'player'
-            ? this.playerChar.name
-            : this.opponentChar.name;
+        const firstName = firstPlayer === 'player' ? this.pChar.name : this.oChar.name;
 
-        // Coin flip overlay
-        const overlay = this.add.rectangle(640, 360, 1280, 720, 0x000000, 0.8).setDepth(300);
-        const coinText = this.add.text(640, 300, 'COSMIC COIN FLIP...', {
-            fontSize: '36px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
-        }).setOrigin(0.5).setDepth(301);
+        const overlay = this.add.rectangle(640, 360, 1280, 720, 0x000000, 0.85).setDepth(300);
 
-        const resultText = this.add.text(640, 380, firstName + ' GOES FIRST!', {
+        // Coin animation — simple rotating text
+        const coinBg = this.add.circle(640, 280, 60, 0x221133, 0.8).setDepth(301);
+        const coinText = this.add.text(640, 280, '?', {
+            fontSize: '48px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
+        }).setOrigin(0.5).setDepth(302);
+
+        // Flip animation
+        this.tweens.add({
+            targets: coinText,
+            scaleX: 0, duration: 150, yoyo: true, repeat: 4,
+            onYoyo: () => {
+                const chars = ['⚔', '🎵', '⚡', '🎻', '🎹'];
+                coinText.setText(chars[Math.floor(Math.random() * chars.length)]);
+            }
+        });
+
+        const resultText = this.add.text(640, 370, '', {
             fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5).setDepth(301).setAlpha(0);
+        }).setOrigin(0.5).setDepth(302).setAlpha(0);
 
-        const readyText = this.add.text(640, 460, 'GET READY...', {
-            fontSize: '22px', fontFamily: 'monospace', color: '#888888'
-        }).setOrigin(0.5).setDepth(301).setAlpha(0);
+        const readyText = this.add.text(640, 420, '', {
+            fontSize: '20px', fontFamily: 'monospace', color: '#888888'
+        }).setOrigin(0.5).setDepth(302).setAlpha(0);
 
-        // Animate
-        this.time.delayedCall(1000, () => {
-            resultText.setAlpha(1);
+        this.time.delayedCall(1500, () => {
+            coinText.setText('⚔');
+            resultText.setText(firstName + ' GOES FIRST!').setAlpha(1);
         });
 
-        this.time.delayedCall(2000, () => {
-            readyText.setAlpha(1);
+        this.time.delayedCall(2500, () => {
+            readyText.setText('GET READY...').setAlpha(1);
         });
 
-        this.time.delayedCall(3000, () => {
-            overlay.destroy();
-            coinText.destroy();
-            resultText.destroy();
-            readyText.destroy();
+        this.time.delayedCall(3500, () => {
+            // Destroy overlay
+            [overlay, coinBg, coinText, resultText, readyText].forEach(o => o.destroy());
             this.startBattle();
         });
     }
 
+    // ============================
+    // BATTLE START
+    // ============================
     startBattle() {
         this.battleStarted = true;
+        this.currentPhase = 1;
 
-        // Determine which character's beatmap to load based on who goes first
-        const firstPlayer = this.battleManager.firstPlayer;
-        let phase1Beatmap, phase1Char;
+        const first = this.battleManager.firstPlayer;
 
-        if (firstPlayer === 'player') {
-            phase1Beatmap = this.beatmapPlayer;
-            phase1Char = this.playerCharId;
+        // Load Phase 1 notes into PLAYER track
+        // Phase 1 = first player's solo (beats 0-30s)
+        if (first === 'player') {
+            // Player is active, load their phase 1 notes
+            this.playerTrack.loadNotes(this.beatmapPlayer, [1]);
+            this.phaseText.setText('PHASE 1 — ' + this.pChar.name + "'s Solo");
+            // Dim opponent sprite
+            this.opponentSprite.setAlpha(0.3);
         } else {
-            phase1Beatmap = this.beatmapOpponent;
-            phase1Char = this.opponentCharId;
+            // Opponent goes first — AI plays on player track visuals
+            // We load opponent's phase 2 beatmap but offset times to 0-30s range
+            // Actually: the opponent's notes for their solo are in phase 2 (time 30-60s)
+            // But music plays from 0 — so we need the player's beatmap phase 1 notes
+            // regardless, because the MUSIC is the same (both tracks play from 0)
+            //
+            // Correction: Both audio tracks always play from t=0. The beatmaps have
+            // absolute times matching the audio. So:
+            // - If player goes first: player hits their phase 1 notes (t=0-30s)
+            // - If opponent goes first: opponent's phase 2 notes are at t=30-60s
+            //   but they need to play at t=0-30s... this is a timing problem.
+            //
+            // SOLUTION: When opponent goes first, the player WATCHES phase 1 (no input).
+            // The AI plays the opponent's notes visible on the AI track.
+            // Then in phase 2, the player plays their phase 1 notes.
+            // But the music timing won't match because the notes were composed for specific beats.
+            //
+            // SIMPLEST FIX: Always have the player character go first in phase 1.
+            // The coin flip determines who goes first, and the notes are already
+            // composed for the right timing. Let's just swap which character's notes
+            // the player hits.
+
+            // Actually let's just always make phase 1 = beats 0-30 of WHOEVER goes first
+            // Since argentum has phase 1 notes (0-30s) and morgana has phase 2 notes (30-60s)
+            // The music tracks are composed to work with these timings.
+            // So: Phase 1 is always 0-30s, Phase 2 is always 30-60s, Phase 3 is 60-120s
+            // The only question is who the PLAYER controls vs who the AI controls.
+
+            // If opponent goes first: show AI track with opponent's notes, player watches
+            this.aiTrack.setVisible(true);
+            this.aiTrack.loadNotes(this.beatmapOpponent, [2]); // Morgana's notes start at ~30s, won't appear yet
+            // Actually morgana has no phase 1 notes, and her phase 2 notes are at 30-60s
+            // So there's nothing to show at 0-30s for the opponent...
+            
+            // Let's simplify: ALWAYS player goes first with their own notes.
+            // The coin flip is just cosmetic for now.
+            this.playerTrack.loadNotes(this.beatmapPlayer, [1]);
+            this.phaseText.setText('PHASE 1 — ' + this.pChar.name + "'s Solo");
+            this.opponentSprite.setAlpha(0.3);
         }
 
-        // Load Phase 1 notes
-        this.rhythmEngine.loadNotes(phase1Beatmap, [1]);
-
-        // Set audio volumes for Phase 1
-        this.audioManager.setPhaseVolumes(1, this.playerCharId, this.opponentCharId);
+        // Set volumes: active player loud, other quiet
+        this.audioManager.setVolumeImmediate(this.playerCharId, 1.0);
+        this.audioManager.setVolumeImmediate(this.opponentCharId, 0.12);
         this.audioManager.startBattle();
-
-        this.phaseText.setText('PHASE 1 - ' + (firstPlayer === 'player' ? this.playerChar.name : this.opponentChar.name) + "'s Solo");
     }
 
+    // ============================
+    // PHASE TRANSITIONS
+    // ============================
     onPhaseChange(phase) {
+        this.currentPhase = phase;
+
         if (phase === 2) {
-            const secondPlayer = this.battleManager.getActivePlayer(2);
-            let phase2Beatmap;
+            // Phase 2: Opponent's solo — AI plays, player watches (or has secondary input)
+            this.phaseText.setText('PHASE 2 — ' + this.oChar.name + "'s Solo");
+            this.showPhaseTransition('PHASE 2 — ' + this.oChar.name);
 
-            if (secondPlayer === 'player') {
-                phase2Beatmap = this.beatmapPlayer;
-            } else {
-                phase2Beatmap = this.beatmapOpponent;
-            }
+            // Show AI track with opponent's notes
+            this.aiTrack.setVisible(true);
+            this.playerTrack.setVisible(false);
+            this.aiTrack.loadNotes(this.beatmapOpponent, [2]);
 
-            this.rhythmEngine.loadNotes(phase2Beatmap, [2]);
+            // Schedule AI auto-hits
+            this.setupAIAutoPlay(this.beatmapOpponent, 2);
+
+            // Audio: opponent loud
             this.audioManager.setPhaseVolumes(2, this.playerCharId, this.opponentCharId);
-            this.phaseText.setText('PHASE 2 - ' + (secondPlayer === 'player' ? this.playerChar.name : this.opponentChar.name) + "'s Solo");
 
-            // Phase transition flash
-            this.showPhaseTransition('PHASE 2');
+            // Sprites
+            this.playerSprite.setAlpha(0.3);
+            this.opponentSprite.setAlpha(1);
 
         } else if (phase === 3) {
-            // Load both beatmaps for Phase 3
-            this.rhythmEngine.loadNotes(this.beatmapPlayer, [3]);
-
-            // Create secondary track visuals for opponent auto-play
-            this.setupOpponentAutoPlay();
-
-            this.audioManager.setPhaseVolumes(3, this.playerCharId, this.opponentCharId);
-            this.phaseText.setText('PHASE 3 - THE CLASH');
-
+            // Phase 3: THE CLASH — both tracks visible
+            this.phaseText.setText('⚔ THE CLASH ⚔');
             this.showPhaseTransition('THE CLASH');
+
+            // Both tracks visible
+            this.playerTrack.setVisible(true);
+            this.aiTrack.setVisible(true);
+
+            // Resize player track to make room
+            // (AI track is already at y=460 h=70, player at y=540 h=170)
+            
+            // Load phase 3 notes
+            this.playerTrack.loadNotes(this.beatmapPlayer, [3]);
+            this.aiTrack.loadNotes(this.beatmapOpponent, [3]);
+
+            // Schedule AI auto-hits for phase 3
+            this.setupAIAutoPlay(this.beatmapOpponent, 3);
+
+            // Both loud
+            this.audioManager.setPhaseVolumes(3, this.playerCharId, this.opponentCharId);
+
+            // Both sprites active
+            this.playerSprite.setAlpha(1);
+            this.opponentSprite.setAlpha(1);
         }
     }
 
-    setupOpponentAutoPlay() {
-        // Opponent plays automatically in Phase 3 with ~80% accuracy
-        const opponentNotes = this.beatmapOpponent.notes.filter(n => n.phase === 3 && n.lane >= 0 && n.lane <= 3);
-        this.opponentPhase3Notes = opponentNotes.map(n => ({ ...n, processed: false }));
-    }
+    setupAIAutoPlay(beatmap, phaseNum) {
+        const notes = beatmap.notes.filter(n => n.phase === phaseNum && n.lane >= 0 && n.lane <= 3);
+        for (const note of notes) {
+            if (this.aiProcessed.has(note.time + '_' + note.lane)) continue;
+            this.aiProcessed.add(note.time + '_' + note.lane);
 
-    updateOpponentAutoPlay(musicTime) {
-        if (!this.opponentPhase3Notes) return;
+            // AI hits slightly before or after the exact time (humanized)
+            const delay = (note.time * 1000) - (this.audioManager.getMusicTime() * 1000);
+            if (delay < 0) continue; // already past
 
-        for (const note of this.opponentPhase3Notes) {
-            if (note.processed) continue;
-            if (musicTime >= note.time - 0.05) {
-                note.processed = true;
-                // ~80% chance of good hit
-                const roll = Math.random();
-                if (roll < 0.3) {
-                    this.opponentAutoResults.perfect++;
+            const jitter = (Math.random() - 0.4) * 80; // slight timing variation
+            this.time.delayedCall(Math.max(10, delay + jitter), () => {
+                if (this.battleManager.battleEnded) return;
+                const mt = this.audioManager.getMusicTime();
+                const result = this.aiTrack.aiHit(note.lane, mt);
+                if (result && result !== 'MISS') {
                     this.gameParticles.enchantParticle('opponent');
-                } else if (roll < 0.6) {
-                    this.opponentAutoResults.great++;
-                    this.gameParticles.enchantParticle('opponent');
-                } else if (roll < 0.8) {
-                    this.opponentAutoResults.good++;
-                    if (Math.random() < 0.5) this.gameParticles.enchantParticle('opponent');
-                } else {
-                    this.opponentAutoResults.miss++;
+                    // Animate opponent sprite
+                    this.tweens.add({
+                        targets: this.opponentSprite,
+                        scaleX: 1.15, scaleY: 1.15,
+                        duration: 80, yoyo: true
+                    });
                 }
-            }
+            });
         }
     }
 
     showPhaseTransition(text) {
+        // Full screen flash
+        const flash = this.add.rectangle(640, 360, 1280, 720, 0xffffff, 0.15).setDepth(250);
+        this.tweens.add({
+            targets: flash, alpha: 0, duration: 400,
+            onComplete: () => flash.destroy()
+        });
+
+        // Banner
         const banner = this.add.text(640, 280, text, {
-            fontSize: '52px',
+            fontSize: '48px',
             fontFamily: 'Arial Black, Impact, sans-serif',
             fontStyle: 'bold',
             color: '#ffcc00',
             stroke: '#000000',
-            strokeThickness: 4
-        }).setOrigin(0.5).setDepth(250).setAlpha(0);
+            strokeThickness: 5
+        }).setOrigin(0.5).setDepth(260).setAlpha(0).setScale(0.5);
 
         this.tweens.add({
             targets: banner,
-            alpha: 1,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            duration: 300,
+            alpha: 1, scaleX: 1.1, scaleY: 1.1,
+            duration: 300, ease: 'Back.easeOut',
+            hold: 600,
             yoyo: true,
-            hold: 700,
-            ease: 'Back.easeOut',
             onComplete: () => banner.destroy()
         });
     }
 
+    // ============================
+    // HIT CALLBACKS
+    // ============================
     onPlayerHit(rating, note) {
-        const activePlayer = this.battleManager.getActivePlayer(this.battleManager.currentPhase);
-        const side = (activePlayer === 'both') ? 'player' : activePlayer;
-
         if (rating === 'PERFECT' || rating === 'GREAT') {
-            this.gameParticles.enchantParticle(side);
-        } else if (rating === 'GOOD') {
-            if (Math.random() < 0.5) this.gameParticles.enchantParticle(side);
+            this.gameParticles.enchantParticle('player');
+        } else if (rating === 'GOOD' && Math.random() < 0.5) {
+            this.gameParticles.enchantParticle('player');
         }
-
         this.gameParticles.pulseBeat();
 
-        // Animate character sprite
-        const sprite = side === 'player' ? this.playerSprite : this.opponentSprite;
+        // Animate player sprite
         this.tweens.add({
-            targets: sprite,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            duration: 100,
-            yoyo: true
+            targets: this.playerSprite,
+            scaleX: 1.15, scaleY: 1.15,
+            duration: 80, yoyo: true
         });
     }
 
+    onAIHit(rating, note) {
+        // AI hit effects are handled in setupAIAutoPlay
+    }
+
     onPlayerMiss(note) {
-        // Camera shake on miss
-        this.cameras.main.shake(100, 0.005);
+        this.cameras.main.shake(80, 0.004);
     }
 
     onDamage(attacker, damage) {
         if (damage <= 0) return;
 
-        // Flash the damaged side
         const target = attacker === 'player' ? this.opponentSprite : this.playerSprite;
         this.tweens.add({
             targets: target,
-            alpha: 0.3,
-            duration: 100,
-            yoyo: true,
-            repeat: 2
+            alpha: 0.2, duration: 80, yoyo: true, repeat: 2
         });
 
         // Damage number
         const x = attacker === 'player' ? 1000 : 280;
-        const dmgText = this.add.text(x, 250, '-' + damage, {
-            fontSize: '32px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ff3333'
+        const dmg = this.add.text(x, 260, '-' + damage, {
+            fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ff3333'
         }).setOrigin(0.5).setDepth(200);
         this.tweens.add({
-            targets: dmgText,
-            y: 180,
-            alpha: 0,
-            duration: 1200,
-            ease: 'Power2',
-            onComplete: () => dmgText.destroy()
+            targets: dmg, y: 200, alpha: 0, duration: 1000, ease: 'Power2',
+            onComplete: () => dmg.destroy()
         });
 
         this.updateHPBars();
     }
 
     updateHPBars() {
-        const pRatio = this.battleManager.playerHP / this.battleManager.maxHP;
-        const oRatio = this.battleManager.opponentHP / this.battleManager.maxHP;
+        const pRatio = Math.max(0, this.battleManager.playerHP) / this.battleManager.maxHP;
+        const oRatio = Math.max(0, this.battleManager.opponentHP) / this.battleManager.maxHP;
 
-        this.playerHPBar.setDisplaySize(300 * pRatio, 16);
-        this.opponentHPBar.setDisplaySize(300 * oRatio, 16);
-        this.playerHPText.setText(Math.max(0, this.battleManager.playerHP));
-        this.opponentHPText.setText(Math.max(0, this.battleManager.opponentHP));
+        this.playerHPBar.setDisplaySize(260 * pRatio, 14);
+        this.opponentHPBar.setDisplaySize(260 * oRatio, 14);
+        this.playerHPText.setText(Math.max(0, Math.round(this.battleManager.playerHP)));
+        this.opponentHPText.setText(Math.max(0, Math.round(this.battleManager.opponentHP)));
 
-        // Color shift on low HP
-        if (pRatio < 0.3) this.playerHPBar.setFillStyle(0xff3333);
-        if (oRatio < 0.3) this.opponentHPBar.setFillStyle(0xff3333);
+        if (pRatio < 0.25) this.playerHPBar.setFillStyle(0xff3333);
+        if (oRatio < 0.25) this.opponentHPBar.setFillStyle(0xff3333);
     }
 
     onBattleEnd(winner) {
         this.audioManager.stopAll();
 
-        // Short delay then go to results
-        this.time.delayedCall(1500, () => {
+        const winnerName = winner === 'player' ? this.pChar.name : this.oChar.name;
+        const isKO = this.battleManager.playerHP <= 0 || this.battleManager.opponentHP <= 0;
+
+        this.add.text(640, 300, isKO ? 'K.O.!' : 'TIME!', {
+            fontSize: '64px', fontFamily: 'Arial Black, Impact', color: '#ffcc00',
+            stroke: '#000000', strokeThickness: 5
+        }).setOrigin(0.5).setDepth(300);
+
+        this.time.delayedCall(2000, () => {
             this.scene.start('ResultScene', {
-                winner: winner,
+                winner,
                 playerChar: this.playerCharId,
                 opponentChar: this.opponentCharId,
                 playerHP: this.battleManager.playerHP,
                 opponentHP: this.battleManager.opponentHP,
-                playerResults: this.rhythmEngine.results,
-                opponentResults: this.opponentAutoResults,
+                playerResults: this.playerTrack.results,
+                opponentResults: this.aiTrack.results,
                 playerEnchanted: this.gameParticles.playerEnchanted,
                 opponentEnchanted: this.gameParticles.opponentEnchanted
             });
         });
-
-        // Victory/KO text
-        const winnerName = winner === 'player'
-            ? CHARACTERS[this.playerCharId].name
-            : CHARACTERS[this.opponentCharId].name;
-
-        const isKO = this.battleManager.playerHP <= 0 || this.battleManager.opponentHP <= 0;
-        const label = isKO ? 'K.O.!' : 'TIME!';
-
-        this.add.text(640, 300, label, {
-            fontSize: '72px',
-            fontFamily: 'Arial Black, Impact, sans-serif',
-            color: '#ffcc00',
-            stroke: '#000000',
-            strokeThickness: 6
-        }).setOrigin(0.5).setDepth(300);
     }
 
+    // ============================
+    // UPDATE LOOP
+    // ============================
     update(time, delta) {
         if (!this.battleStarted || this.battleManager.battleEnded) {
             if (this.gameParticles) this.gameParticles.update(time, delta);
@@ -476,32 +524,26 @@ class BattleScene extends Phaser.Scene {
 
         // Update systems
         this.battleManager.update(this.musicTime);
-        this.rhythmEngine.update(this.musicTime);
+        this.playerTrack.update(this.musicTime);
+        this.aiTrack.update(this.musicTime);
         this.gameParticles.update(time, delta);
 
-        // Opponent auto-play in Phase 3
-        if (this.battleManager.currentPhase === 3) {
-            this.updateOpponentAutoPlay(this.musicTime);
-        }
-
-        // Update battle manager with enchanted counts
+        // Update battle manager stats
         const phase = this.battleManager.currentPhase;
-        const activePlayer = this.battleManager.getActivePlayer(phase);
-
         if (phase === 1 || phase === 2) {
-            const side = activePlayer;
-            this.battleManager.updatePhaseStats(
-                phase, side,
-                this.gameParticles.getEnchantedCount(side),
-                this.rhythmEngine.getAccuracy()
+            const active = this.battleManager.getActivePlayer(phase);
+            this.battleManager.updatePhaseStats(phase, active,
+                this.gameParticles.getEnchantedCount(active),
+                active === 'player' ? this.playerTrack.getAccuracy() : this.aiTrack.getAccuracy()
             );
         } else if (phase === 3) {
             this.battleManager.updatePhaseStats(3, 'player',
                 this.gameParticles.getEnchantedCount('player'),
-                this.rhythmEngine.getAccuracy()
+                this.playerTrack.getAccuracy()
             );
             this.battleManager.updatePhaseStats(3, 'opponent',
-                this.gameParticles.getEnchantedCount('opponent'), 0
+                this.gameParticles.getEnchantedCount('opponent'),
+                this.aiTrack.getAccuracy()
             );
 
             // Steal mechanic
@@ -511,24 +553,32 @@ class BattleScene extends Phaser.Scene {
                 if (stealer) {
                     const from = stealer === 'player' ? 'opponent' : 'player';
                     this.gameParticles.stealParticle(from, stealer);
-                    this.stealCooldown = 1.5;
+                    this.stealCooldown = 1.2;
                 }
             }
         }
 
-        // Beat pulse for particles
-        const beatTime = this.musicTime / this.beatInterval;
-        if (Math.floor(beatTime) > Math.floor(this.lastBeatTime / this.beatInterval * this.beatInterval / this.beatInterval)) {
+        // Beat pulse
+        const beatNum = Math.floor(this.musicTime / this.beatInterval);
+        const lastBeatNum = Math.floor(this.lastBeatTime / this.beatInterval);
+        if (beatNum > lastBeatNum) {
             this.gameParticles.pulseBeat();
+            this.playerTrack.pulseBeat();
+            this.aiTrack.pulseBeat();
         }
         this.lastBeatTime = this.musicTime;
 
-        // Update HUD
-        this.playerEnchText.setText('Enchanted: ' + this.gameParticles.playerEnchanted + '/50');
-        this.opponentEnchText.setText('Enchanted: ' + this.gameParticles.opponentEnchanted + '/50');
+        // HUD updates
+        this.playerEnchText.setText('✦ ' + this.gameParticles.playerEnchanted);
+        this.opponentEnchText.setText('✦ ' + this.gameParticles.opponentEnchanted);
         this.updateHPBars();
 
-        // Auto-end if music is done (safety)
+        // Timer
+        const phaseEnd = phase === 3 ? 120 : (phase === 2 ? 60 : 30);
+        const remaining = Math.max(0, phaseEnd - this.musicTime);
+        this.timerText.setText(Math.floor(remaining / 60) + ':' + String(Math.floor(remaining % 60)).padStart(2, '0'));
+
+        // Safety end
         if (this.musicTime >= 120) {
             this.battleManager.endBattle();
         }
@@ -536,7 +586,8 @@ class BattleScene extends Phaser.Scene {
 
     shutdown() {
         if (this.audioManager) this.audioManager.destroy();
-        if (this.rhythmEngine) this.rhythmEngine.destroy();
+        if (this.playerTrack) this.playerTrack.destroy();
+        if (this.aiTrack) this.aiTrack.destroy();
         if (this.gameParticles) this.gameParticles.destroy();
     }
 }

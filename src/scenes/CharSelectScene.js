@@ -9,7 +9,7 @@ class CharSelectScene extends Phaser.Scene {
         this.add.rectangle(640, 360, 1280, 720, 0x0a0a1a, 0.7);
 
         // Title
-        this.add.text(640, 50, 'SELECT YOUR GLADIATOR', {
+        this.add.text(640, 45, 'SELECT YOUR GLADIATOR', {
             fontSize: '36px',
             fontFamily: 'Arial Black, Impact, sans-serif',
             fontStyle: 'bold',
@@ -18,157 +18,167 @@ class CharSelectScene extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0.5);
 
-        // Character grid: 2 rows x 4 columns
-        const gridStartX = 240;
-        const gridStartY = 160;
-        const cellWidth = 200;
-        const cellHeight = 200;
+        this.selectedChar = null;
+        this.charSlots = {};
+
+        // Character grid — centered, 2 rows x 4 cols
         const cols = 4;
+        const cellW = 180, cellH = 200, gap = 16;
+        const totalW = cols * cellW + (cols - 1) * gap;
+        const startX = (1280 - totalW) / 2 + cellW / 2;
+        const startY = 170;
 
         const selectableChars = ['argentum', 'morgana'];
-        this.selectedChar = null;
 
-        // Detail panel (right side)
-        this.detailBg = this.add.graphics();
-        this.detailName = this.add.text(640, 520, '', {
-            fontSize: '32px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5);
-        this.detailTitle = this.add.text(640, 555, '', {
-            fontSize: '18px', fontFamily: 'monospace', color: '#C0C0C0'
-        }).setOrigin(0.5);
-        this.detailTagline = this.add.text(640, 585, '', {
-            fontSize: '16px', fontFamily: 'Arial', fontStyle: 'italic', color: '#8888aa'
-        }).setOrigin(0.5);
-
-        // Create 8 grid slots
         for (let i = 0; i < 8; i++) {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            const x = gridStartX + col * cellWidth;
-            const y = gridStartY + row * cellHeight;
+            const x = startX + col * (cellW + gap);
+            const y = startY + row * (cellH + gap);
 
             if (i < 2) {
-                // Selectable characters
-                const charId = selectableChars[i];
-                const charData = CHARACTERS[charId];
-                this.createCharSlot(x, y, cellWidth - 20, cellHeight - 20, charData);
+                this.createCharSlot(x, y, cellW, cellH, CHARACTERS[selectableChars[i]]);
             } else {
-                // Locked slots
-                this.createLockedSlot(x, y, cellWidth - 20, cellHeight - 20);
+                this.createLockedSlot(x, y, cellW, cellH);
             }
         }
 
-        // Fight button (initially hidden)
-        this.fightBtnBg = this.add.graphics();
-        this.fightBtnText = this.add.text(640, 650, 'FIGHT!', {
-            fontSize: '30px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5).setAlpha(0);
-        this.fightBtn = this.add.rectangle(640, 650, 220, 50).setInteractive({ useHandCursor: true }).setAlpha(0.001).setVisible(false);
-        this.fightBtn.on('pointerdown', () => {
-            if (this.selectedChar) {
-                const opponent = this.selectedChar === 'argentum' ? 'morgana' : 'argentum';
-                this.scene.start('BattleScene', {
-                    player: this.selectedChar,
-                    opponent: opponent
-                });
-            }
+        // Detail panel
+        this.detailName = this.add.text(640, 510, '', {
+            fontSize: '32px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff'
+        }).setOrigin(0.5);
+        this.detailTitle = this.add.text(640, 545, '', {
+            fontSize: '18px', fontFamily: 'monospace', color: '#C0C0C0'
+        }).setOrigin(0.5);
+        this.detailTagline = this.add.text(640, 575, '', {
+            fontSize: '16px', fontFamily: 'Arial', fontStyle: 'italic', color: '#8888aa'
+        }).setOrigin(0.5);
+
+        // FIGHT button (hidden initially)
+        this.fightContainer = this.add.container(640, 645).setAlpha(0);
+        const fightBg = this.add.graphics();
+        fightBg.fillStyle(0x8B00FF, 0.9);
+        fightBg.fillRoundedRect(-120, -28, 240, 56, 12);
+        fightBg.lineStyle(2, 0xC0C0C0, 1);
+        fightBg.strokeRoundedRect(-120, -28, 240, 56, 12);
+        const fightText = this.add.text(0, 0, 'FIGHT!', {
+            fontSize: '30px', fontFamily: 'Arial Black, Impact', fontStyle: 'bold', color: '#ffffff'
+        }).setOrigin(0.5);
+        this.fightContainer.add([fightBg, fightText]);
+
+        const fightZone = this.add.zone(640, 645, 240, 56).setInteractive({ useHandCursor: true });
+        fightZone.on('pointerdown', () => {
+            if (!this.selectedChar) return;
+            const opponent = this.selectedChar === 'argentum' ? 'morgana' : 'argentum';
+            this.scene.start('BattleScene', { player: this.selectedChar, opponent });
         });
 
         // Back button
-        const backBtn = this.add.text(60, 680, '< BACK', {
+        const back = this.add.text(60, 690, '< BACK', {
             fontSize: '18px', fontFamily: 'monospace', color: '#888888'
-        }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
-        backBtn.on('pointerdown', () => this.scene.start('MenuScene'));
-        backBtn.on('pointerover', () => backBtn.setColor('#ffffff'));
-        backBtn.on('pointerout', () => backBtn.setColor('#888888'));
+        }).setInteractive({ useHandCursor: true });
+        back.on('pointerdown', () => this.scene.start('MenuScene'));
+        back.on('pointerover', () => back.setColor('#ffffff'));
+        back.on('pointerout', () => back.setColor('#888888'));
     }
 
     createCharSlot(x, y, w, h, charData) {
+        const container = this.add.container(x, y);
+
+        // Background card
         const bg = this.add.graphics();
-        bg.fillStyle(0x1a1a2e, 0.8);
-        bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 10);
-        bg.lineStyle(2, charData.color, 0.6);
-        bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+        bg.fillStyle(0x1a1a2e, 0.85);
+        bg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
+        bg.lineStyle(2, charData.color, 0.5);
+        bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+        container.add(bg);
 
         // Portrait
-        const portrait = this.add.image(x, y - 20, charData.portrait)
-            .setDisplaySize(w - 40, h - 60);
+        const portrait = this.add.image(0, -15, charData.portrait)
+            .setDisplaySize(w - 30, h - 65);
+        container.add(portrait);
 
         // Name
-        this.add.text(x, y + h / 2 - 25, charData.name, {
+        const name = this.add.text(0, h / 2 - 28, charData.name, {
             fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: charData.colorHex
         }).setOrigin(0.5);
+        container.add(name);
 
-        // Hit area
-        const hitArea = this.add.rectangle(x, y, w, h).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+        // Selection highlight (hidden)
         const highlight = this.add.graphics();
+        container.add(highlight);
 
-        hitArea.on('pointerover', () => {
-            highlight.clear();
-            highlight.lineStyle(3, 0xffffff, 0.8);
-            highlight.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+        // Interactive zone — the FULL card area
+        const zone = this.add.zone(x, y, w, h).setInteractive({ useHandCursor: true });
+
+        zone.on('pointerover', () => {
+            if (this.selectedChar !== charData.id) {
+                highlight.clear();
+                highlight.lineStyle(3, 0xffffff, 0.5);
+                highlight.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+            }
         });
 
-        hitArea.on('pointerout', () => {
+        zone.on('pointerout', () => {
             if (this.selectedChar !== charData.id) {
                 highlight.clear();
             }
         });
 
-        hitArea.on('pointerdown', () => {
-            this.selectCharacter(charData, x, y, w, h, highlight);
+        zone.on('pointerdown', () => {
+            this.selectCharacter(charData.id);
         });
 
-        // Store references for deselection
-        charData._highlight = highlight;
-        charData._slotX = x;
-        charData._slotY = y;
-        charData._slotW = w;
-        charData._slotH = h;
+        this.charSlots[charData.id] = { container, highlight, w, h, charData };
     }
 
-    selectCharacter(charData, x, y, w, h, highlight) {
-        // Clear previous selection
-        Object.values(CHARACTERS).forEach(c => {
-            if (c._highlight) c._highlight.clear();
+    selectCharacter(charId) {
+        // Clear all highlights
+        Object.values(this.charSlots).forEach(slot => {
+            slot.highlight.clear();
         });
 
-        this.selectedChar = charData.id;
+        this.selectedChar = charId;
+        const slot = this.charSlots[charId];
+        const { w, h, charData } = slot;
 
-        // Highlight selected
-        highlight.clear();
-        highlight.lineStyle(3, 0xffffff, 1);
-        highlight.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+        // Show selection
+        slot.highlight.clear();
+        slot.highlight.lineStyle(3, 0xffffff, 1);
+        slot.highlight.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
 
-        // Update detail panel
+        // Pulse effect
+        this.tweens.add({
+            targets: slot.container,
+            scaleX: 1.05, scaleY: 1.05,
+            duration: 150, yoyo: true
+        });
+
+        // Update detail
         this.detailName.setText(charData.name);
-        this.detailTitle.setText(charData.title + '  \u2022  ' + charData.instrument);
+        this.detailTitle.setText(charData.title + '  •  ' + charData.instrument);
         this.detailTagline.setText('"' + charData.tagline + '"');
 
-        // Show fight button
-        this.fightBtnBg.clear();
-        this.fightBtnBg.fillStyle(0x8B00FF, 0.9);
-        this.fightBtnBg.fillRoundedRect(530, 625, 220, 50, 10);
-        this.fightBtnBg.lineStyle(2, 0xC0C0C0, 1);
-        this.fightBtnBg.strokeRoundedRect(530, 625, 220, 50, 10);
-        this.fightBtnText.setAlpha(1);
-        this.fightBtn.setVisible(true);
+        // Show FIGHT button
+        this.tweens.add({
+            targets: this.fightContainer,
+            alpha: 1, duration: 200
+        });
     }
 
     createLockedSlot(x, y, w, h) {
         const bg = this.add.graphics();
-        bg.fillStyle(0x111122, 0.6);
-        bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 10);
-        bg.lineStyle(1, 0x333344, 0.5);
-        bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+        bg.fillStyle(0x111122, 0.5);
+        bg.fillRoundedRect(x - w / 2, y - h / 2, w, h, 12);
+        bg.lineStyle(1, 0x222244, 0.5);
+        bg.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 12);
 
-        // Lock icon (simple text)
         this.add.text(x, y - 10, '?', {
-            fontSize: '48px', fontFamily: 'Arial', fontStyle: 'bold', color: '#333344'
+            fontSize: '48px', fontFamily: 'Arial', fontStyle: 'bold', color: '#222244'
         }).setOrigin(0.5);
 
-        this.add.text(x, y + 40, 'LOCKED', {
-            fontSize: '12px', fontFamily: 'monospace', color: '#333344'
+        this.add.text(x, y + 35, 'LOCKED', {
+            fontSize: '11px', fontFamily: 'monospace', color: '#333355'
         }).setOrigin(0.5);
     }
 }

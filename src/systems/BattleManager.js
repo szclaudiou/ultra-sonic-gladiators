@@ -4,30 +4,25 @@ class BattleManager {
         this.playerChar = config.playerChar;
         this.opponentChar = config.opponentChar;
 
-        // Decide who goes first via coin flip
+        // Coin flip (cosmetic for now — player always plays phase 1)
         this.firstPlayer = Math.random() < 0.5 ? 'player' : 'opponent';
 
         this.playerHP = 1000;
         this.opponentHP = 1000;
         this.maxHP = 1000;
 
-        this.currentPhase = 0; // 0=not started, 1, 2, 3
-        this.phaseStartTime = 0;
+        this.currentPhase = 0;
         this.battleEnded = false;
 
-        // Phase timing (in seconds from music start)
-        this.PHASE1_START = 0;
+        // Phase timing (absolute music time in seconds)
         this.PHASE1_END = 30;
-        this.PHASE2_START = 30;
         this.PHASE2_END = 60;
-        this.PHASE3_START = 60;
         this.PHASE3_END = 120;
 
-        // Stats per phase
         this.phaseStats = {
             1: { enchanted: 0, accuracy: 0 },
             2: { enchanted: 0, accuracy: 0 },
-            3: { playerEnchanted: 0, opponentEnchanted: 0 }
+            3: { playerEnchanted: 0, opponentEnchanted: 0, playerAccuracy: 0, opponentAccuracy: 0 }
         };
 
         this.callbacks = {
@@ -37,11 +32,16 @@ class BattleManager {
         };
 
         this.lastDamageTick = 0;
+        this.phase1DamageApplied = false;
+        this.phase2DamageApplied = false;
     }
 
     getActivePlayer(phase) {
-        if (phase === 1) return this.firstPlayer;
-        if (phase === 2) return this.firstPlayer === 'player' ? 'opponent' : 'player';
+        // Phase 1: player plays (their notes are at 0-30s)
+        // Phase 2: opponent plays (their notes are at 30-60s)
+        // Phase 3: both
+        if (phase === 1) return 'player';
+        if (phase === 2) return 'opponent';
         return 'both';
     }
 
@@ -49,30 +49,32 @@ class BattleManager {
         if (this.battleEnded) return;
 
         let newPhase = 0;
-        if (musicTime >= this.PHASE3_START) {
-            newPhase = 3;
-        } else if (musicTime >= this.PHASE2_START) {
-            newPhase = 2;
-        } else if (musicTime >= this.PHASE1_START) {
-            newPhase = 1;
-        }
+        if (musicTime >= 60) newPhase = 3;
+        else if (musicTime >= 30) newPhase = 2;
+        else if (musicTime >= 0) newPhase = 1;
 
         if (newPhase !== this.currentPhase && newPhase > 0) {
-            // End of previous phase damage
-            if (this.currentPhase === 1 || this.currentPhase === 2) {
-                this.applyPhaseDamage(this.currentPhase);
+            // Apply end-of-phase damage
+            if (this.currentPhase === 1 && !this.phase1DamageApplied) {
+                this.applyPhaseDamage(1);
+                this.phase1DamageApplied = true;
             }
+            if (this.currentPhase === 2 && !this.phase2DamageApplied) {
+                this.applyPhaseDamage(2);
+                this.phase2DamageApplied = true;
+            }
+
             this.currentPhase = newPhase;
             this.callbacks.onPhaseChange(newPhase);
         }
 
-        // Phase 3 continuous damage ticks
-        if (this.currentPhase === 3 && musicTime - this.lastDamageTick > 2) {
+        // Phase 3 continuous damage ticks (every 3 seconds)
+        if (this.currentPhase === 3 && musicTime - this.lastDamageTick > 3) {
             this.lastDamageTick = musicTime;
             this.applyPhase3Tick();
         }
 
-        // End of battle
+        // End at 120s
         if (musicTime >= this.PHASE3_END && !this.battleEnded) {
             this.endBattle();
         }
@@ -80,15 +82,19 @@ class BattleManager {
 
     applyPhaseDamage(phase) {
         const stats = this.phaseStats[phase];
-        const damage = Math.floor(stats.enchanted * 5 * Math.max(stats.accuracy, 0.1));
-        const activePlayer = this.getActivePlayer(phase);
+        const accuracy = Math.max(stats.accuracy, 0.1);
+        const damage = Math.floor(stats.enchanted * 5 * accuracy);
+        const active = this.getActivePlayer(phase);
 
-        if (activePlayer === 'player') {
+        if (damage <= 0) return;
+
+        if (active === 'player') {
             this.opponentHP = Math.max(0, this.opponentHP - damage);
+            this.callbacks.onDamage('player', damage);
         } else {
             this.playerHP = Math.max(0, this.playerHP - damage);
+            this.callbacks.onDamage('opponent', damage);
         }
-        this.callbacks.onDamage(activePlayer, damage);
 
         if (this.playerHP <= 0 || this.opponentHP <= 0) {
             this.endBattle();
@@ -96,16 +102,17 @@ class BattleManager {
     }
 
     applyPhase3Tick() {
-        const playerAdv = this.phaseStats[3].playerEnchanted - this.phaseStats[3].opponentEnchanted;
-        const tickDamage = Math.floor(Math.abs(playerAdv) * 2);
-        if (tickDamage <= 0) return;
+        const stats = this.phaseStats[3];
+        const diff = stats.playerEnchanted - stats.opponentEnchanted;
+        const tickDmg = Math.floor(Math.abs(diff) * 2.5);
+        if (tickDmg <= 0) return;
 
-        if (playerAdv > 0) {
-            this.opponentHP = Math.max(0, this.opponentHP - tickDamage);
-            this.callbacks.onDamage('player', tickDamage);
+        if (diff > 0) {
+            this.opponentHP = Math.max(0, this.opponentHP - tickDmg);
+            this.callbacks.onDamage('player', tickDmg);
         } else {
-            this.playerHP = Math.max(0, this.playerHP - tickDamage);
-            this.callbacks.onDamage('opponent', tickDamage);
+            this.playerHP = Math.max(0, this.playerHP - tickDmg);
+            this.callbacks.onDamage('opponent', tickDmg);
         }
 
         if (this.playerHP <= 0 || this.opponentHP <= 0) {
@@ -120,8 +127,10 @@ class BattleManager {
         } else if (phase === 3) {
             if (side === 'player') {
                 this.phaseStats[3].playerEnchanted = enchantedCount;
+                this.phaseStats[3].playerAccuracy = accuracy;
             } else {
                 this.phaseStats[3].opponentEnchanted = enchantedCount;
+                this.phaseStats[3].opponentAccuracy = accuracy;
             }
         }
     }
@@ -140,13 +149,13 @@ class BattleManager {
 
     shouldSteal(phase) {
         if (phase !== 3) return null;
-        const pEnch = this.phaseStats[3].playerEnchanted;
-        const oEnch = this.phaseStats[3].opponentEnchanted;
-        const total = pEnch + oEnch;
-        if (total === 0) return null;
+        const pE = this.phaseStats[3].playerEnchanted;
+        const oE = this.phaseStats[3].opponentEnchanted;
+        const total = pE + oE;
+        if (total < 5) return null;
 
-        if (pEnch > oEnch * 1.15 && pEnch - oEnch > 3) return 'player';
-        if (oEnch > pEnch * 1.15 && oEnch - pEnch > 3) return 'opponent';
+        if (pE > oE * 1.15 && pE - oE > 3) return 'player';
+        if (oE > pE * 1.15 && oE - pE > 3) return 'opponent';
         return null;
     }
 }

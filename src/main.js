@@ -14,7 +14,12 @@ const config = {
     },
     input: {
         activePointers: 4
+    },
+    render: {
+        antialias: true,
+        pixelArt: false,
+        transparent: false
     }
 };
 
-const game = new Phaser.Game(config);
+window.game = new Phaser.Game(config);
