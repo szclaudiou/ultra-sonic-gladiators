@@ -99,8 +99,27 @@ class BattleScene extends Phaser.Scene {
         this.aiNotes = []; // scheduled AI auto-play
         this.aiProcessed = new Set();
 
-        // ===== COIN FLIP =====
-        this.showCoinFlip();
+        // ===== AUDIO UNLOCK =====
+        // Browser autoplay policy requires user gesture before audio
+        if (this.sound.context && this.sound.context.state === 'suspended') {
+            const unlockOverlay = this.add.rectangle(640, 360, 1280, 720, 0x000000, 0.9).setDepth(400).setInteractive();
+            const unlockText = this.add.text(640, 340, '🎵 TAP TO START 🎵', {
+                fontSize: '36px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
+            }).setOrigin(0.5).setDepth(401);
+            const unlockSub = this.add.text(640, 390, 'Audio requires user interaction', {
+                fontSize: '16px', fontFamily: 'monospace', color: '#888899'
+            }).setOrigin(0.5).setDepth(401);
+
+            unlockOverlay.once('pointerdown', () => {
+                this.sound.context.resume();
+                unlockOverlay.destroy();
+                unlockText.destroy();
+                unlockSub.destroy();
+                this.showCoinFlip();
+            });
+        } else {
+            this.showCoinFlip();
+        }
     }
 
     createCharSprite(x, y, color) {
@@ -320,13 +339,14 @@ class BattleScene extends Phaser.Scene {
         this.currentPhase = phase;
 
         if (phase === 2) {
-            // Phase 2: Opponent's solo — AI plays, player watches (or has secondary input)
+            // Phase 2: Opponent's solo — AI plays their notes
             this.phaseText.setText('PHASE 2 — ' + this.oChar.name + "'s Solo");
             this.showPhaseTransition('PHASE 2 — ' + this.oChar.name);
 
-            // Show AI track with opponent's notes
+            // Show AI track prominently with opponent's notes
             this.aiTrack.setVisible(true);
-            this.playerTrack.setVisible(false);
+            // Dim player track but keep visible (no input)
+            this.playerTrack.container.setAlpha(0.3);
             this.aiTrack.loadNotes(this.beatmapOpponent, [2]);
 
             // Schedule AI auto-hits
@@ -340,12 +360,13 @@ class BattleScene extends Phaser.Scene {
             this.opponentSprite.setAlpha(1);
 
         } else if (phase === 3) {
-            // Phase 3: THE CLASH — both tracks visible
+            // Phase 3: THE CLASH — both tracks visible and active
             this.phaseText.setText('⚔ THE CLASH ⚔');
             this.showPhaseTransition('THE CLASH');
 
-            // Both tracks visible
+            // Both tracks visible at full opacity
             this.playerTrack.setVisible(true);
+            this.playerTrack.container.setAlpha(1);
             this.aiTrack.setVisible(true);
 
             // Resize player track to make room
