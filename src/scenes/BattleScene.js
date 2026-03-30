@@ -25,14 +25,18 @@ class BattleScene extends Phaser.Scene {
         vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.5, 0.5);
         vig.fillRect(0, 640, 1280, 80);
 
-        // Midline energy (subtle)
-        const midGfx = this.add.graphics().setDepth(5);
-        midGfx.lineStyle(1, 0x4444aa, 0.15);
-        midGfx.lineBetween(640, 70, 640, 460);
+        // Midline energy (animated in Phase 3)
+        this.midline = this.add.graphics().setDepth(5);
+        this.midline.lineStyle(1, 0x4444aa, 0.15);
+        this.midline.lineBetween(640, 70, 640, 460);
 
-        // Small character sprites
-        this.playerSprite = this.createCharSprite(280, 320, pChar.color);
-        this.opponentSprite = this.createCharSprite(1000, 320, oChar.color);
+        // Small character sprites with glow
+        this.playerSprite = this.createCharSprite(280, 320, pChar.color, pChar.colorAlt);
+        this.opponentSprite = this.createCharSprite(1000, 320, oChar.color, oChar.colorAlt);
+
+        // Character base glow (ground effect)
+        this.playerGlow = this.add.circle(280, 380, 40, pChar.color, 0.06).setDepth(3);
+        this.opponentGlow = this.add.circle(1000, 380, 40, oChar.color, 0.06).setDepth(3);
 
         // ===== HUD =====
         this.createHUD(pChar, oChar);
@@ -122,14 +126,18 @@ class BattleScene extends Phaser.Scene {
         }
     }
 
-    createCharSprite(x, y, color) {
+    createCharSprite(x, y, color, colorAlt) {
         const c = this.add.container(x, y).setDepth(10);
-        // Glow
-        c.add(this.add.circle(0, 0, 28, color, 0.06));
+        // Outer glow aura
+        c.add(this.add.circle(0, 0, 35, color, 0.04));
+        // Inner glow
+        c.add(this.add.circle(0, 0, 22, colorAlt || color, 0.08));
         // Body
-        c.add(this.add.rectangle(0, 8, 16, 26, color, 0.7).setOrigin(0.5));
+        c.add(this.add.rectangle(0, 8, 18, 28, color, 0.8).setOrigin(0.5));
         // Head
-        c.add(this.add.circle(0, -10, 8, color, 0.85));
+        c.add(this.add.circle(0, -12, 9, color, 0.9));
+        // Eye highlight
+        c.add(this.add.circle(2, -13, 2, 0xffffff, 0.6));
         return c;
     }
 
@@ -408,8 +416,14 @@ class BattleScene extends Phaser.Scene {
                     // Animate opponent sprite
                     this.tweens.add({
                         targets: this.opponentSprite,
-                        scaleX: 1.15, scaleY: 1.15,
+                        scaleX: 1.2, scaleY: 1.2,
                         duration: 80, yoyo: true
+                    });
+                    // Pulse opponent ground glow
+                    this.tweens.add({
+                        targets: this.opponentGlow,
+                        alpha: 0.2, scaleX: 1.5, scaleY: 1.5,
+                        duration: 120, yoyo: true
                     });
                 }
             });
@@ -458,8 +472,15 @@ class BattleScene extends Phaser.Scene {
         // Animate player sprite
         this.tweens.add({
             targets: this.playerSprite,
-            scaleX: 1.15, scaleY: 1.15,
+            scaleX: 1.2, scaleY: 1.2,
             duration: 80, yoyo: true
+        });
+
+        // Pulse the ground glow on hit
+        this.tweens.add({
+            targets: this.playerGlow,
+            alpha: 0.2, scaleX: 1.5, scaleY: 1.5,
+            duration: 120, yoyo: true
         });
     }
 
@@ -586,6 +607,20 @@ class BattleScene extends Phaser.Scene {
             this.gameParticles.pulseBeat();
             this.playerTrack.pulseBeat();
             this.aiTrack.pulseBeat();
+
+            // Phase 3: midline energy pulses
+            if (phase === 3) {
+                this.midline.clear();
+                const pE = this.gameParticles.playerEnchanted;
+                const oE = this.gameParticles.opponentEnchanted;
+                const advantage = pE - oE;
+                // Midline shifts based on who has more enchanted particles
+                const midX = 640 + Phaser.Math.Clamp(advantage * 2, -120, 120);
+                const color = advantage > 0 ? this.pChar.color : (advantage < 0 ? this.oChar.color : 0x4444aa);
+                const intensity = Math.min(0.5, Math.abs(advantage) * 0.01 + 0.1);
+                this.midline.lineStyle(2 + Math.abs(advantage) * 0.1, color, intensity);
+                this.midline.lineBetween(midX, 70, midX, 460);
+            }
         }
         this.lastBeatTime = this.musicTime;
 
