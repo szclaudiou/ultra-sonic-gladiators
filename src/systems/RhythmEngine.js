@@ -105,9 +105,10 @@ class RhythmEngine {
         }).setOrigin(0.5).setDepth(120);
         this.container.add(this.feedbackText);
 
-        // Combo text
-        this.comboText = this.scene.add.text(this.hitZoneX + 90, y + h + 18, '', {
-            fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ffcc00'
+        // Combo text — more prominent
+        this.comboText = this.scene.add.text(this.hitZoneX + 90, y + h + 22, '', {
+            fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif', fontStyle: 'bold', color: '#ffcc00',
+            stroke: '#000000', strokeThickness: 3
         }).setOrigin(0.5).setDepth(120);
         this.container.add(this.comboText);
     }
@@ -353,8 +354,9 @@ class RhythmEngine {
         });
 
         if (this.results.combo > 1) {
-            this.comboText.setText(this.results.combo + 'x');
-            this.comboText.setAlpha(1);
+            this.comboText.setText(this.results.combo + 'x COMBO');
+            this.comboText.setAlpha(1).setScale(1.2);
+            this.scene.tweens.add({ targets: this.comboText, scaleX: 1, scaleY: 1, duration: 150 });
         } else if (rating === 'MISS') {
             this.comboText.setAlpha(0);
         }

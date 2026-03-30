@@ -104,7 +104,7 @@ class BattleScene extends Phaser.Scene {
         // ===== RHYTHM ENGINES =====
         // Player's track (bottom) — 4 lanes, ~150px tall
         this.playerTrack = new RhythmEngine(this, {
-            trackY: 555, trackHeight: 155, hitZoneX: 160, noteSpeed: 420,
+            trackY: 555, trackHeight: 155, hitZoneX: 160, noteSpeed: 480,
             color: pChar.color, colorHex: pChar.colorHex,
             depth: 100,
             onHit: (rating, note) => this.onPlayerHit(rating, note),
@@ -489,6 +489,11 @@ class BattleScene extends Phaser.Scene {
     onPlayerHit(rating, note) {
         if (rating === 'PERFECT' || rating === 'GREAT') {
             this.gameParticles.enchantParticle('player');
+            if (rating === 'PERFECT') {
+                // Screen flash on PERFECT
+                const flash = this.add.rectangle(640, 360, 1280, 720, this.pChar.color, 0.08).setDepth(90);
+                this.tweens.add({ targets: flash, alpha: 0, duration: 200, onComplete: () => flash.destroy() });
+            }
         } else if (rating === 'GOOD' && Math.random() < 0.5) {
             this.gameParticles.enchantParticle('player');
         }
