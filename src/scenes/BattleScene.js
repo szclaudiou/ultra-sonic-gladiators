@@ -495,23 +495,68 @@ class BattleScene extends Phaser.Scene {
     onDamage(attacker, damage) {
         if (damage <= 0) return;
 
-        const target = attacker === 'player' ? this.opponentSprite : this.playerSprite;
+        const isPlayer = attacker === 'player';
+        const target = isPlayer ? this.opponentSprite : this.playerSprite;
+
+        // Flash the target
         this.tweens.add({
             targets: target,
             alpha: 0.2, duration: 80, yoyo: true, repeat: 2
         });
 
+        // Camera shake proportional to damage
+        const shakeIntensity = Math.min(0.015, damage * 0.00005);
+        this.cameras.main.shake(150, shakeIntensity);
+
         // Damage number
-        const x = attacker === 'player' ? 1000 : 280;
-        const dmg = this.add.text(x, 260, '-' + damage, {
-            fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: '#ff3333'
+        const dmgX = isPlayer ? 1000 : 280;
+        const dmg = this.add.text(dmgX, 260, '-' + damage, {
+            fontSize: damage > 100 ? '36px' : '28px',
+            fontFamily: 'Arial', fontStyle: 'bold', color: '#ff3333'
         }).setOrigin(0.5).setDepth(200);
         this.tweens.add({
-            targets: dmg, y: 200, alpha: 0, duration: 1000, ease: 'Power2',
+            targets: dmg, y: 190, alpha: 0, duration: 1200, ease: 'Power2',
             onComplete: () => dmg.destroy()
         });
 
+        // Particle beam effect for big damage (phase end)
+        if (damage > 50) {
+            this.showDamageBeam(isPlayer);
+        }
+
         this.updateHPBars();
+    }
+
+    showDamageBeam(fromPlayer) {
+        const startX = fromPlayer ? 320 : 960;
+        const endX = fromPlayer ? 960 : 320;
+        const color = fromPlayer ? this.pChar.color : this.oChar.color;
+
+        // Create a beam of particles shooting across
+        for (let i = 0; i < 12; i++) {
+            const y = 280 + (Math.random() - 0.5) * 100;
+            const p = this.add.circle(startX, y, 3 + Math.random() * 4, color, 0.8).setDepth(60);
+            const delay = i * 30;
+            this.tweens.add({
+                targets: p,
+                x: endX + (Math.random() - 0.5) * 60,
+                y: y + (Math.random() - 0.5) * 40,
+                alpha: 0, scaleX: 0.3, scaleY: 0.3,
+                duration: 500 + Math.random() * 200,
+                delay,
+                onComplete: () => p.destroy()
+            });
+        }
+
+        // Central beam line
+        const beam = this.add.rectangle((startX + endX) / 2, 280, Math.abs(endX - startX), 4, color, 0.4)
+            .setDepth(55);
+        this.tweens.add({
+            targets: beam,
+            alpha: 0, scaleY: 3,
+            duration: 400,
+            onComplete: () => beam.destroy()
+        });
     }
 
     updateHPBars() {
