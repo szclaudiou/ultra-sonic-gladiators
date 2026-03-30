@@ -147,11 +147,13 @@ Use Phaser 3 from CDN. The game should work with a simple HTTP server (no bundle
 - Scale mode: Phaser.Scale.FIT with autoCenter
 - Must work on mobile (touch input for rhythm lanes)
 
-### GitHub Pages
-- The repo root serves as the site
+### Deployment: Vercel (NOT GitHub Pages)
+- Deploy via Vercel CLI: `npx vercel --prod`
+- The repo root serves as the site (static files, no framework)
 - index.html at root
 - All paths relative
 - No server-side anything
+- DO NOT use GitHub Pages
 
 ### Performance
 - Particle system should handle 100+ particles smoothly
