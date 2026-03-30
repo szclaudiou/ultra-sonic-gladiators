@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ultra Sonic Gladiators</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        canvas { display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script src="src/data/characters.js"></script>
+    <script src="src/systems/AudioManager.js"></script>
+    <script src="src/systems/RhythmEngine.js"></script>
+    <script src="src/systems/ParticleSystem.js"></script>
+    <script src="src/systems/BattleManager.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/CharSelectScene.js"></script>
+    <script src="src/scenes/BattleScene.js"></script>
+    <script src="src/scenes/ResultScene.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>
