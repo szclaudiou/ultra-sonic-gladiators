@@ -93,9 +93,11 @@ class CharSelectScene extends Phaser.Scene {
         bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
         container.add(bg);
 
-        // Portrait
+        // Portrait — make it interactive too as a fallback
         const portrait = this.add.image(0, -15, charData.portrait)
-            .setDisplaySize(w - 30, h - 65);
+            .setDisplaySize(w - 30, h - 65)
+            .setInteractive({ useHandCursor: true });
+        portrait.on('pointerdown', () => this.selectCharacter(charData.id));
         container.add(portrait);
 
         // Name

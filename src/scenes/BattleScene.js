@@ -204,10 +204,14 @@ class BattleScene extends Phaser.Scene {
             this.input.keyboard.addKey(code).on('down', () => this.handleLaneInput(lane));
         });
 
-        // Mobile touch: 4 zones across bottom
-        const zoneW = 320;
+        // Mobile touch zones — cover the full track area
+        // Track is at y=555, height=155 — touch zone extends down
+        const trackTop = 540;
+        const trackH = 180;
+        const laneH = trackH / 4;
         for (let i = 0; i < 4; i++) {
-            const zone = this.add.rectangle(i * zoneW + zoneW / 2, 625, zoneW, 190)
+            const laneY = trackTop + i * laneH + laneH / 2;
+            const zone = this.add.rectangle(640, laneY, 1280, laneH)
                 .setInteractive().setAlpha(0.001).setDepth(150);
             zone.on('pointerdown', () => this.handleLaneInput(i));
         }
