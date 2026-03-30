@@ -266,7 +266,7 @@ class RhythmEngine {
         return rating;
     }
 
-    // AI auto-hit: simulate hitting a note with given accuracy
+    // AI auto-hit: organic, streaky, makes mistakes
     aiHit(lane, musicTime) {
         let bestNote = null;
         let bestDiff = Infinity;
@@ -284,12 +284,26 @@ class RhythmEngine {
 
         bestNote.hit = true;
 
-        // Determine rating based on simulated accuracy
+        // Organic AI: streaky behavior
+        // Track mood: AI goes through hot/cold streaks
+        if (!this._aiMood) this._aiMood = 0.6; // 0=terrible, 1=on fire
+        // Drift mood organically
+        this._aiMood += (Math.random() - 0.48) * 0.08; // slightly biased upward
+        this._aiMood = Phaser.Math.Clamp(this._aiMood, 0.15, 0.92);
+
+        // Combo affects mood: long combos = more confident, misses = nervous
+        if (this.results.combo > 10) this._aiMood = Math.min(0.92, this._aiMood + 0.02);
+        if (this.results.combo === 0) this._aiMood = Math.max(0.2, this._aiMood - 0.05);
+
+        // Accent notes are harder — mood penalty
+        const isAccent = bestNote.type === 'accent';
+        const effectiveMood = isAccent ? this._aiMood * 0.85 : this._aiMood;
+
         const roll = Math.random();
         let rating;
-        if (roll < 0.35) { rating = 'PERFECT'; this.results.perfect++; }
-        else if (roll < 0.70) { rating = 'GREAT'; this.results.great++; }
-        else if (roll < 0.85) { rating = 'GOOD'; this.results.good++; }
+        if (roll < effectiveMood * 0.4) { rating = 'PERFECT'; this.results.perfect++; }
+        else if (roll < effectiveMood * 0.75) { rating = 'GREAT'; this.results.great++; }
+        else if (roll < effectiveMood * 0.92) { rating = 'GOOD'; this.results.good++; }
         else { rating = 'MISS'; this.results.miss++; }
 
         if (rating !== 'MISS') {
@@ -300,6 +314,8 @@ class RhythmEngine {
         } else {
             this.results.combo = 0;
             this.showFeedback('MISS');
+            // Mood tanks after a miss
+            this._aiMood = Math.max(0.2, this._aiMood - 0.1);
         }
 
         this.destroyNoteVisual(bestNote);

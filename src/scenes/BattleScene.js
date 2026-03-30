@@ -544,45 +544,16 @@ class BattleScene extends Phaser.Scene {
             onComplete: () => dmg.destroy()
         });
 
-        // Particle beam effect for big damage (phase end)
-        if (damage > 50) {
-            this.showDamageBeam(isPlayer);
+        // Particle attack beam — enchanted particles rush at opponent
+        if (damage > 20) {
+            const side = isPlayer ? 'player' : 'opponent';
+            this.gameParticles.launchAttack(side, damage);
         }
 
         this.updateHPBars();
     }
 
-    showDamageBeam(fromPlayer) {
-        const startX = fromPlayer ? 320 : 960;
-        const endX = fromPlayer ? 960 : 320;
-        const color = fromPlayer ? this.pChar.color : this.oChar.color;
-
-        // Create a beam of particles shooting across
-        for (let i = 0; i < 12; i++) {
-            const y = 280 + (Math.random() - 0.5) * 100;
-            const p = this.add.circle(startX, y, 3 + Math.random() * 4, color, 0.8).setDepth(60);
-            const delay = i * 30;
-            this.tweens.add({
-                targets: p,
-                x: endX + (Math.random() - 0.5) * 60,
-                y: y + (Math.random() - 0.5) * 40,
-                alpha: 0, scaleX: 0.3, scaleY: 0.3,
-                duration: 500 + Math.random() * 200,
-                delay,
-                onComplete: () => p.destroy()
-            });
-        }
-
-        // Central beam line
-        const beam = this.add.rectangle((startX + endX) / 2, 280, Math.abs(endX - startX), 4, color, 0.4)
-            .setDepth(55);
-        this.tweens.add({
-            targets: beam,
-            alpha: 0, scaleY: 3,
-            duration: 400,
-            onComplete: () => beam.destroy()
-        });
-    }
+    
 
     updateHPBars() {
         const pRatio = Math.max(0, this.battleManager.playerHP) / this.battleManager.maxHP;
