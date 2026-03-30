@@ -8,8 +8,8 @@ class GameParticleSystem {
         this.opponentColorAlt = config.opponentColorAlt || 0x4B0082;
         this.totalPerSide = config.totalPerSide || 90;
 
-        // Arena bounds
-        this.bounds = { x: 30, y: 70, width: 1220, height: 370 };
+        // Arena bounds — taller now that tracks are more compact
+        this.bounds = { x: 30, y: 70, width: 1220, height: 400 };
         this.midX = this.bounds.x + this.bounds.width / 2;
 
         this.playerEnchanted = 0;

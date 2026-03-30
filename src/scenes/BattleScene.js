@@ -102,18 +102,18 @@ class BattleScene extends Phaser.Scene {
         this.beatmapOpponent = this.cache.json.get(oChar.beatmap);
 
         // ===== RHYTHM ENGINES =====
-        // Player's track (bottom) — 4 lanes, ~150px tall
+        // Player's track (bottom) — 4 lanes, condensed
         this.playerTrack = new RhythmEngine(this, {
-            trackY: 555, trackHeight: 155, hitZoneX: 160, noteSpeed: 480,
+            trackY: 575, trackHeight: 135, hitZoneX: 160, noteSpeed: 480,
             color: pChar.color, colorHex: pChar.colorHex,
             depth: 100,
             onHit: (rating, note) => this.onPlayerHit(rating, note),
             onMiss: (note) => this.onPlayerMiss(note)
         });
 
-        // AI opponent track — will expand in Phase 2 when player track is hidden
+        // AI opponent track
         this.aiTrack = new RhythmEngine(this, {
-            trackY: 462, trackHeight: 88, hitZoneX: 160, noteSpeed: 380,
+            trackY: 490, trackHeight: 80, hitZoneX: 160, noteSpeed: 380,
             color: oChar.color, colorHex: oChar.colorHex,
             isAI: true, label: oChar.name,
             depth: 95,
@@ -229,10 +229,9 @@ class BattleScene extends Phaser.Scene {
             this.input.keyboard.addKey(code).on('down', () => this.handleLaneInput(lane));
         });
 
-        // Mobile touch zones — cover the full track area
-        // Track is at y=555, height=155 — touch zone extends down
-        const trackTop = 540;
-        const trackH = 180;
+        // Mobile touch zones — cover the player track area
+        const trackTop = 560;
+        const trackH = 155;
         const laneH = trackH / 4;
         for (let i = 0; i < 4; i++) {
             const laneY = trackTop + i * laneH + laneH / 2;
