@@ -36,6 +36,10 @@ class RhythmEngine {
         // Synthesized hit sounds
         this.audioCtx = scene.sound.context;
 
+        // Object pools to prevent memory leaks
+        this.hitEffectPool = [];
+        this.noteVisualPool = [];
+
         this.drawTrack();
     }
 
@@ -364,19 +368,31 @@ class RhythmEngine {
 
     showHitEffect(note) {
         const laneY = this.trackY + note.lane * this.laneHeight + this.laneHeight / 2;
-        // Expanding ring
-        const ring = this.scene.add.circle(this.hitZoneX, laneY, 5, this.color, 0.8).setDepth(110);
+        
+        // Expanding ring - try to get from pool first
+        let ring = this.hitEffectPool.pop();
+        if (!ring) {
+            ring = this.scene.add.circle(this.hitZoneX, laneY, 5, this.color, 0.8).setDepth(110);
+        }
+        ring.setPosition(this.hitZoneX, laneY).setScale(1).setAlpha(0.8);
+        
         this.scene.tweens.add({
             targets: ring,
             scaleX: 4, scaleY: 4, alpha: 0,
             duration: 250, ease: 'Power2',
-            onComplete: () => ring.destroy()
+            onComplete: () => this.hitEffectPool.push(ring) // Return to pool
         });
-        // Flash on lane
-        const flash = this.scene.add.rectangle(this.hitZoneX, laneY, 80, this.laneHeight - 4, this.color, 0.2).setDepth(105);
+        
+        // Flash on lane - also use pooling
+        let flash = this.hitEffectPool.pop();
+        if (!flash) {
+            flash = this.scene.add.rectangle(this.hitZoneX, laneY, 80, this.laneHeight - 4, this.color, 0.2).setDepth(105);
+        }
+        flash.setPosition(this.hitZoneX, laneY).setAlpha(0.2);
+        
         this.scene.tweens.add({
             targets: flash, alpha: 0, duration: 150,
-            onComplete: () => flash.destroy()
+            onComplete: () => this.hitEffectPool.push(flash) // Return to pool
         });
     }
 
@@ -466,6 +482,13 @@ class RhythmEngine {
 
     destroy() {
         this.activeNotes.forEach(n => this.destroyNoteVisual(n));
+        
+        // Clean up object pools
+        this.hitEffectPool.forEach(obj => obj.destroy());
+        this.noteVisualPool.forEach(obj => obj.destroy());
+        this.hitEffectPool = [];
+        this.noteVisualPool = [];
+        
         this.container.destroy();
     }
 }

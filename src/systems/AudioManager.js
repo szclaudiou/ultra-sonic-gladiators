@@ -75,6 +75,12 @@ class AudioManager {
 
     destroy() {
         this.stopAll();
+        // Properly dispose of sound objects
+        Object.values(this.tracks).forEach(track => {
+            if (track && !track.destroyed) {
+                track.destroy();
+            }
+        });
         this.tracks = {};
     }
 }
