@@ -16,60 +16,52 @@ class BattleScene extends Phaser.Scene {
 
         // ===== ARENA BACKGROUND =====
         this.add.image(640, 360, 'arena-bg').setDisplaySize(1280, 720);
-        // Dark overlay for depth
-        this.add.rectangle(640, 360, 1280, 720, 0x000022, 0.35);
-        // Vignette edges
-        const vig = this.add.graphics().setDepth(2);
-        vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0.7, 0, 0);
-        vig.fillRect(0, 0, 1280, 80);
-        vig.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.5, 0.5);
-        vig.fillRect(0, 640, 1280, 80);
+        // Light overlay for atmosphere
+        this.add.rectangle(640, 360, 1280, 720, 0x000011, 0.2);
 
-        // Spectator glow — animated crowd dots at the arena edges
+        // Spectators — only in the UPPER background (stands behind arena)
         this.spectators = [];
-        for (let i = 0; i < 60; i++) {
-            // Arrange in curved rows suggesting stadium seating
-            const angle = (i / 60) * Math.PI + Math.PI * 0.1;
-            const r = 580 + Math.random() * 100;
-            const cx = 640 + Math.cos(angle) * r * 0.6;
-            const cy = 60 + Math.sin(angle) * r * 0.15 - Math.random() * 30;
-            const colors = [0x4444ff, 0xff4444, 0xffff44, 0x44ff44, 0xff44ff];
+        for (let i = 0; i < 50; i++) {
+            // Upper half only — the stands behind the arena floor
+            const cx = 100 + Math.random() * 1080;
+            const cy = 30 + Math.random() * 140; // y 30-170, well above the floor
+            const colors = [0x4444ff, 0xff4444, 0xffff44, 0x44ff44, 0xff44ff, 0x44ffff];
             const color = colors[Math.floor(Math.random() * colors.length)];
-            const dot = this.add.circle(cx, cy, 1.5 + Math.random(), color, 0.3 + Math.random() * 0.4).setDepth(1);
-            this.spectators.push({ dot, phase: Math.random() * Math.PI * 2, baseAlpha: 0.3 + Math.random() * 0.3 });
+            const dot = this.add.circle(cx, cy, 1 + Math.random() * 1.5, color, 0.2 + Math.random() * 0.3).setDepth(1);
+            this.spectators.push({ dot, phase: Math.random() * Math.PI * 2, baseAlpha: 0.2 + Math.random() * 0.3 });
         }
 
-        // Spotlight beams from above (subtle)
-        const lights = this.add.graphics().setDepth(2);
+        // Spotlight beams onto the floor
+        const lights = this.add.graphics().setDepth(2).setAlpha(0.6);
+        lights.fillStyle(0xffffff, 0.02);
+        lights.fillTriangle(280, 0, 340, 0, 330, 420);
         lights.fillStyle(0xffffff, 0.015);
-        lights.fillTriangle(200, 0, 260, 0, 280, 460);
-        lights.fillStyle(0xffffff, 0.012);
-        lights.fillTriangle(550, 0, 620, 0, 640, 460);
-        lights.fillStyle(0xffffff, 0.012);
-        lights.fillTriangle(660, 0, 730, 0, 640, 460);
-        lights.fillStyle(0xffffff, 0.015);
-        lights.fillTriangle(1020, 0, 1080, 0, 1000, 460);
+        lights.fillTriangle(620, 0, 660, 0, 640, 420);
+        lights.fillStyle(0xffffff, 0.02);
+        lights.fillTriangle(940, 0, 1000, 0, 950, 420);
 
-        // Midline energy (animated in Phase 3)
+        // Midline energy (animated in Phase 3) — between characters on the floor
         this.midline = this.add.graphics().setDepth(5);
-        this.midline.lineStyle(1, 0x4444aa, 0.15);
-        this.midline.lineBetween(640, 70, 640, 460);
+        this.midline.lineStyle(1, 0x4444aa, 0.12);
+        this.midline.lineBetween(640, 100, 640, 400);
 
-        // Pixel art character sprites — small arena figures
-        const spriteScale = 2;
-        this.playerSprite = this.add.container(220, 370).setDepth(10);
-        const pGlowAura = this.add.circle(0, 0, 40, pChar.color, 0.07);
-        const pSpr = this.add.image(0, 0, pChar.sprite).setScale(spriteScale).setOrigin(0.5);
+        // Characters standing ON the arena floor (bottom 40% of screen)
+        const floorY = 395; // ground level on the new arena perspective
+        const spriteScale = 2.5;
+
+        this.playerSprite = this.add.container(300, floorY).setDepth(10);
+        const pGlowAura = this.add.circle(0, 10, 45, pChar.color, 0.08);
+        const pSpr = this.add.image(0, 0, pChar.sprite).setScale(spriteScale).setOrigin(0.5, 0.8);
         this.playerSprite.add([pGlowAura, pSpr]);
 
-        this.opponentSprite = this.add.container(1060, 370).setDepth(10);
-        const oGlowAura = this.add.circle(0, 0, 45, oChar.color, 0.07);
-        const oSpr = this.add.image(0, 0, oChar.sprite).setScale(spriteScale).setOrigin(0.5);
+        this.opponentSprite = this.add.container(980, floorY).setDepth(10);
+        const oGlowAura = this.add.circle(0, 10, 50, oChar.color, 0.08);
+        const oSpr = this.add.image(0, 0, oChar.sprite).setScale(spriteScale).setOrigin(0.5, 0.8);
         this.opponentSprite.add([oGlowAura, oSpr]);
 
-        // Character base glow (ground effect)
-        this.playerGlow = this.add.circle(220, 420, 40, pChar.color, 0.07).setDepth(3);
-        this.opponentGlow = this.add.circle(1060, 420, 45, oChar.color, 0.07).setDepth(3);
+        // Character base glow on the floor
+        this.playerGlow = this.add.ellipse(300, floorY + 15, 70, 20, pChar.color, 0.1).setDepth(3);
+        this.opponentGlow = this.add.ellipse(980, floorY + 15, 80, 22, oChar.color, 0.1).setDepth(3);
 
         // ===== HUD =====
         this.createHUD(pChar, oChar);
@@ -675,7 +667,7 @@ class BattleScene extends Phaser.Scene {
                 const color = advantage > 0 ? this.pChar.color : (advantage < 0 ? this.oChar.color : 0x4444aa);
                 const intensity = Math.min(0.5, Math.abs(advantage) * 0.01 + 0.1);
                 this.midline.lineStyle(2 + Math.abs(advantage) * 0.1, color, intensity);
-                this.midline.lineBetween(midX, 70, midX, 460);
+                this.midline.lineBetween(midX, 100, midX, 400);
             }
         }
         this.lastBeatTime = this.musicTime;

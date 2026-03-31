@@ -8,8 +8,8 @@ class GameParticleSystem {
         this.opponentColorAlt = config.opponentColorAlt || 0x4B0082;
         this.totalPerSide = config.totalPerSide || 90;
 
-        // Arena bounds — taller now that tracks are more compact
-        this.bounds = { x: 30, y: 70, width: 1220, height: 400 };
+        // Particle arena: airspace above the floor (floor ~y=400)
+        this.bounds = { x: 60, y: 100, width: 1160, height: 280 };
         this.midX = this.bounds.x + this.bounds.width / 2;
 
         this.playerEnchanted = 0;
@@ -17,9 +17,9 @@ class GameParticleSystem {
         this.beatPulse = 0;
         this.flowTime = 0;
 
-        // Flow formation centers
-        this.playerCenter = { x: 240, y: 280 };
-        this.opponentCenter = { x: 1040, y: 280 };
+        // Formation centers — in the air above each fighter
+        this.playerCenter = { x: 340, y: 250 };
+        this.opponentCenter = { x: 940, y: 250 };
 
         this.container = scene.add.container(0, 0).setDepth(50);
         this.init();
