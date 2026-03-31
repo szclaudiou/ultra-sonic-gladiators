@@ -358,6 +358,9 @@ class BattleScene extends Phaser.Scene {
     // ============================
     onPhaseChange(phase) {
         this.currentPhase = phase;
+        
+        // Clear AI processing cache to prevent memory leaks and duplicate processing
+        this.aiProcessed.clear();
 
         if (phase === 2) {
             // Phase 2: Opponent's solo — AI plays their notes
@@ -689,9 +692,22 @@ class BattleScene extends Phaser.Scene {
     }
 
     shutdown() {
+        // Clean up all systems to prevent memory leaks
         if (this.audioManager) this.audioManager.destroy();
         if (this.playerTrack) this.playerTrack.destroy();
         if (this.aiTrack) this.aiTrack.destroy();
         if (this.gameParticles) this.gameParticles.destroy();
+        
+        // Clear spectator references
+        this.spectators = null;
+        
+        // Clear AI processing data to prevent memory leaks
+        if (this.aiNotes) this.aiNotes.length = 0;
+        if (this.aiProcessed) this.aiProcessed.clear();
+        
+        // Remove any remaining input listeners
+        if (this.input && this.input.keyboard) {
+            this.input.keyboard.removeAllKeys();
+        }
     }
 }

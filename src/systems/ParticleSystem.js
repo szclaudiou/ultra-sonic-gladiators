@@ -22,6 +22,11 @@ class GameParticleSystem {
         this.opponentCenter = { x: 940, y: 250 };
 
         this.container = scene.add.container(0, 0).setDepth(50);
+        
+        // Performance optimization flags
+        this.needsFormationUpdate = true;
+        this.lastFormationTime = 0;
+        
         this.init();
     }
 
@@ -136,6 +141,8 @@ class GameParticleSystem {
 
         if (side === 'player') this.playerEnchanted++;
         else this.opponentEnchanted++;
+        
+        this.needsFormationUpdate = true; // Mark for formation update
 
         this.spawnSparkle(p.x, p.y, color, 5);
     }
@@ -277,8 +284,12 @@ class GameParticleSystem {
         this.beatPulse *= 0.92;
         this.flowTime += dt;
 
-        // Update formation targets
-        this.updateFormations(this.flowTime);
+        // Update formation targets only when needed (performance optimization)
+        if (this.needsFormationUpdate || this.flowTime - this.lastFormationTime > 0.05) {
+            this.updateFormations(this.flowTime);
+            this.lastFormationTime = this.flowTime;
+            this.needsFormationUpdate = false;
+        }
 
         for (const p of this.particles) {
             if (p.enchanted) {

@@ -66,9 +66,11 @@ class CharSelectScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.fightContainer.add([fightBg, fightText]);
 
-        const fightZone = this.add.zone(640, 645, 240, 56).setInteractive({ useHandCursor: true });
+        const fightZone = this.add.zone(640, 645, 300, 70).setInteractive({ useHandCursor: true });
+        let fightButtonDebounce = false;
         fightZone.on('pointerdown', () => {
-            if (!this.selectedChar) return;
+            if (!this.selectedChar || fightButtonDebounce) return;
+            fightButtonDebounce = true;
             const opponent = this.selectedChar === 'argentum' ? 'morgana' : 'argentum';
             this.scene.start('BattleScene', { player: this.selectedChar, opponent });
         });
@@ -93,11 +95,29 @@ class CharSelectScene extends Phaser.Scene {
         bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
         container.add(bg);
 
-        // Portrait — make it interactive too as a fallback
+        // Portrait — make it interactive too as a fallback with larger hit area for mobile
         const portrait = this.add.image(0, -15, charData.portrait)
             .setDisplaySize(w - 30, h - 65)
             .setInteractive({ useHandCursor: true });
         portrait.on('pointerdown', () => this.selectCharacter(charData.id));
+        
+        // Add hover effects for better UX
+        portrait.on('pointerover', () => {
+            bg.clear();
+            bg.fillStyle(0x1a1a2e, 0.95);
+            bg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
+            bg.lineStyle(3, charData.color, 0.8);
+            bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+        });
+        portrait.on('pointerout', () => {
+            if (this.selectedChar !== charData.id) {
+                bg.clear();
+                bg.fillStyle(0x1a1a2e, 0.85);
+                bg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
+                bg.lineStyle(2, charData.color, 0.5);
+                bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+            }
+        });
         container.add(portrait);
 
         // Name
