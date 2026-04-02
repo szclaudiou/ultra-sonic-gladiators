@@ -8,8 +8,14 @@ class GameParticleSystem {
         this.opponentColorAlt = config.opponentColorAlt || 0x4B0082;
         this.totalPerSide = config.totalPerSide || 90;
 
-        // Particle arena: airspace above the floor (floor ~y=400)
-        this.bounds = { x: 60, y: 100, width: 1160, height: 280 };
+        // Particle arena: dynamic bounds based on viewport
+        const { width, height } = scene.cameras.main;
+        this.bounds = {
+            x: width * 0.047,
+            y: height * 0.139,
+            width: width * 0.906,
+            height: height * 0.389
+        };
         this.midX = this.bounds.x + this.bounds.width / 2;
 
         this.playerEnchanted = 0;
@@ -18,15 +24,15 @@ class GameParticleSystem {
         this.flowTime = 0;
 
         // Formation centers — in the air above each fighter
-        this.playerCenter = { x: 340, y: 250 };
-        this.opponentCenter = { x: 940, y: 250 };
+        this.playerCenter = { x: width * 0.266, y: height * 0.347 };
+        this.opponentCenter = { x: width * 0.734, y: height * 0.347 };
 
         this.container = scene.add.container(0, 0).setDepth(50);
-        
+
         // Performance optimization flags
         this.needsFormationUpdate = true;
         this.lastFormationTime = 0;
-        
+
         this.init();
     }
 
@@ -54,7 +60,7 @@ class GameParticleSystem {
         const particle = {
             dot, halo, side, enchanted: false,
             x, y, homeX: x, homeY: y,
-            formX: x, formY: y, // formation target
+            formX: x, formY: y,
             phase: Math.random() * Math.PI * 2,
             speed: 0.3 + Math.random() * 0.7,
             index
@@ -68,14 +74,12 @@ class GameParticleSystem {
     // FORMATION PATTERNS
     // =========================================
 
-    // Argentum (player): heroic arc — particles form a rising crescent/wave
     getPlayerFormation(index, totalEnchanted, time) {
         const center = this.playerCenter;
         const i = index % totalEnchanted;
-        const t = i / Math.max(1, totalEnchanted - 1); // 0 to 1
+        const t = i / Math.max(1, totalEnchanted - 1);
 
-        // Wave/crescent formation
-        const angle = -Math.PI * 0.4 + t * Math.PI * 0.8; // arc from -72° to +72°
+        const angle = -Math.PI * 0.4 + t * Math.PI * 0.8;
         const radius = 50 + totalEnchanted * 0.8;
         const wave = Math.sin(time * 2 + t * Math.PI * 3) * 12;
 
@@ -85,13 +89,11 @@ class GameParticleSystem {
         };
     }
 
-    // Morgana (opponent): web pattern — particles form concentric rings connected by threads
     getOpponentFormation(index, totalEnchanted, time) {
         const center = this.opponentCenter;
         const i = index % totalEnchanted;
 
-        // Concentric web rings
-        const ring = Math.floor(i / 8); // 8 particles per ring
+        const ring = Math.floor(i / 8);
         const pos = i % 8;
         const angle = (pos / 8) * Math.PI * 2 + time * 0.5 + ring * 0.4;
         const radius = 25 + ring * 22;
@@ -141,8 +143,8 @@ class GameParticleSystem {
 
         if (side === 'player') this.playerEnchanted++;
         else this.opponentEnchanted++;
-        
-        this.needsFormationUpdate = true; // Mark for formation update
+
+        this.needsFormationUpdate = true;
 
         this.spawnSparkle(p.x, p.y, color, 5);
     }
@@ -179,7 +181,6 @@ class GameParticleSystem {
         p.homeX = newCenter.x + (Math.random() - 0.5) * 120;
         p.homeY = newCenter.y + (Math.random() - 0.5) * 100;
 
-        // Dramatic arc animation
         this.scene.tweens.add({
             targets: p,
             x: p.homeX, y: p.homeY,
@@ -190,7 +191,6 @@ class GameParticleSystem {
                 this.spawnSparkle(p.x, p.y, newColor, 3);
             }
         });
-        // Flash white during transition
         this.scene.time.delayedCall(400, () => { p.dot.setFillStyle(0xffffff, 0.9); });
     }
 
@@ -201,21 +201,19 @@ class GameParticleSystem {
         const enchanted = this.particles.filter(p => p.side === fromSide && p.enchanted);
         if (enchanted.length === 0) return;
 
+        const { width, height } = this.scene.cameras.main;
         const targetCenter = fromSide === 'player' ? this.opponentCenter : this.playerCenter;
         const color = fromSide === 'player' ? this.playerColor : this.opponentColor;
 
-        // Select particles for the beam (proportional to damage)
         const beamCount = Math.min(enchanted.length, Math.max(5, Math.floor(damage / 8)));
         const beamParticles = Phaser.Utils.Array.Shuffle(enchanted).slice(0, beamCount);
 
-        // Phase 1: particles converge to a point
-        const launchX = fromSide === 'player' ? 400 : 880;
-        const launchY = 280;
+        const launchX = fromSide === 'player' ? width * 0.3125 : width * 0.6875;
+        const launchY = height * 0.389;
 
         beamParticles.forEach((p, i) => {
             const delay = i * 20;
 
-            // Rush to convergence point
             this.scene.tweens.add({
                 targets: p,
                 x: launchX + (Math.random() - 0.5) * 20,
@@ -223,7 +221,6 @@ class GameParticleSystem {
                 duration: 250, delay, ease: 'Power2'
             });
 
-            // Then fire at target
             this.scene.time.delayedCall(300 + delay, () => {
                 this.scene.tweens.add({
                     targets: p,
@@ -231,9 +228,7 @@ class GameParticleSystem {
                     y: targetCenter.y + (Math.random() - 0.5) * 60,
                     duration: 200, ease: 'Cubic.easeIn',
                     onComplete: () => {
-                        // Explode on impact
                         this.spawnSparkle(p.x, p.y, color, 4);
-                        // Bounce back to formation
                         this.scene.tweens.add({
                             targets: p,
                             x: p.homeX + (Math.random() - 0.5) * 40,
@@ -284,7 +279,6 @@ class GameParticleSystem {
         this.beatPulse *= 0.92;
         this.flowTime += dt;
 
-        // Update formation targets only when needed (performance optimization)
         if (this.needsFormationUpdate || this.flowTime - this.lastFormationTime > 0.05) {
             this.updateFormations(this.flowTime);
             this.lastFormationTime = this.flowTime;
@@ -293,25 +287,21 @@ class GameParticleSystem {
 
         for (const p of this.particles) {
             if (p.enchanted) {
-                // Move toward formation position with organic lag
                 p.phase += dt * (1.5 + p.speed);
-                const formBlend = 0.04; // how tightly they follow formation
+                const formBlend = 0.04;
                 const targetX = p.formX + Math.sin(p.phase) * (8 + this.beatPulse * 12);
                 const targetY = p.formY + Math.cos(p.phase * 1.3) * (6 + this.beatPulse * 10);
                 p.x += (targetX - p.x) * formBlend;
                 p.y += (targetY - p.y) * formBlend;
 
-                // Pulsing size
                 const pulse = 4.5 + Math.sin(p.phase * 2) * 1.2 + this.beatPulse * 3;
                 p.dot.setRadius(pulse);
                 p.dot.setAlpha(0.85 + Math.sin(p.phase * 3) * 0.15);
 
-                // Halo
                 const haloPulse = 15 + this.beatPulse * 10 + Math.sin(p.phase * 2) * 3;
                 p.halo.setRadius(haloPulse);
                 p.halo.setAlpha(0.15 + this.beatPulse * 0.15);
 
-                // Sparkle trails
                 if (Math.random() < 0.006 + this.beatPulse * 0.025) {
                     const color = p.side === 'player' ? this.playerColorAlt : this.opponentColorAlt;
                     const trail = this.scene.add.circle(p.x, p.y, 1.5, color, 0.5).setDepth(49);
@@ -322,12 +312,10 @@ class GameParticleSystem {
                     });
                 }
             } else {
-                // Lazy dormant drift
                 p.phase += dt * 0.35;
                 p.x += Math.sin(p.phase) * 0.12;
                 p.y += Math.cos(p.phase * 0.6) * 0.08;
 
-                // Keep in bounds
                 const isLeft = p.side === 'player';
                 const minX = isLeft ? this.bounds.x : this.midX + 10;
                 const maxX = isLeft ? this.midX - 10 : this.bounds.x + this.bounds.width;

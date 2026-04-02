@@ -18,18 +18,22 @@ class MenuScene extends Phaser.Scene {
     }
 
     create() {
+        const { width, height } = this.cameras.main;
+        const cx = width / 2;
+        const cy = height / 2;
+
         // Background
-        const bg = this.add.image(640, 360, 'menu-bg').setDisplaySize(1280, 720);
+        const bg = this.add.image(cx, cy, 'menu-bg').setDisplaySize(width, height);
         bg.setAlpha(0.8);
 
         // Dark overlay
-        const overlay = this.add.rectangle(640, 360, 1280, 720, 0x000000, 0.4);
+        this.add.rectangle(cx, cy, width, height, 0x000000, 0.4);
 
         // Ambient particles
         this.menuParticles = [];
         for (let i = 0; i < 60; i++) {
-            const x = Math.random() * 1280;
-            const y = Math.random() * 720;
+            const x = Math.random() * width;
+            const y = Math.random() * height;
             const color = Math.random() > 0.5 ? 0xC0C0C0 : 0x8B00FF;
             const p = this.add.circle(x, y, 2 + Math.random() * 3, color, 0.3 + Math.random() * 0.4);
             this.menuParticles.push({
@@ -41,8 +45,9 @@ class MenuScene extends Phaser.Scene {
         }
 
         // Title with glow effect
-        const titleShadow = this.add.text(640, 140, 'ULTRA SONIC\nGLADIATORS', {
-            fontSize: '72px',
+        const titleSize = Math.max(28, Math.min(72, width * 0.056)) + 'px';
+        const titleShadow = this.add.text(cx, height * 0.19, 'ULTRA SONIC\nGLADIATORS', {
+            fontSize: titleSize,
             fontFamily: 'Arial Black, Impact, sans-serif',
             fontStyle: 'bold',
             color: '#8B00FF',
@@ -50,8 +55,8 @@ class MenuScene extends Phaser.Scene {
             lineSpacing: 5
         }).setOrigin(0.5).setAlpha(0.3).setScale(1.02);
 
-        const title = this.add.text(640, 140, 'ULTRA SONIC\nGLADIATORS', {
-            fontSize: '72px',
+        const title = this.add.text(cx, height * 0.19, 'ULTRA SONIC\nGLADIATORS', {
+            fontSize: titleSize,
             fontFamily: 'Arial Black, Impact, sans-serif',
             fontStyle: 'bold',
             color: '#ffffff',
@@ -73,78 +78,92 @@ class MenuScene extends Phaser.Scene {
         });
 
         // Subtitle
-        this.add.text(640, 240, 'RHYTHM  \u2022  BATTLE  \u2022  DOMINATE', {
-            fontSize: '18px',
+        const subSize = Math.max(12, Math.min(18, width * 0.014)) + 'px';
+        this.add.text(cx, height * 0.33, 'RHYTHM  \u2022  BATTLE  \u2022  DOMINATE', {
+            fontSize: subSize,
             fontFamily: 'monospace',
             color: '#C0C0C0',
             letterSpacing: 8
         }).setOrigin(0.5);
 
         // VS MODE button
-        const vsBtn = this.createButton(640, 380, 'VS MODE', () => {
+        this.createButton(cx, height * 0.53, 'VS MODE', () => {
             this.scene.start('CharSelectScene');
         });
 
         // Story mode (disabled)
-        const storyBtn = this.createButton(640, 460, 'STORY MODE', null, true);
+        this.createButton(cx, height * 0.64, 'STORY MODE', null, true);
 
         // Footer
-        this.add.text(640, 660, 'D  F  J  K  \u2014  Master the rhythm, command the particles', {
-            fontSize: '14px',
+        const footerSize = Math.max(10, Math.min(14, width * 0.011)) + 'px';
+        this.add.text(cx, height * 0.92, 'D  F  J  K  \u2014  Master the rhythm, command the particles', {
+            fontSize: footerSize,
             fontFamily: 'monospace',
             color: '#666688'
         }).setOrigin(0.5);
+
+        // Listen for resize
+        this.scale.on('resize', (gameSize) => {
+            this.onResize(gameSize.width, gameSize.height);
+        });
+    }
+
+    onResize(width, height) {
+        // Re-create the scene on resize for simplicity
+        this.scene.restart();
     }
 
     createButton(x, y, text, callback, disabled) {
-        const width = 280;
-        const height = 56;
+        const { width } = this.cameras.main;
+        const btnWidth = Math.max(200, Math.min(280, width * 0.22));
+        const btnHeight = Math.max(40, Math.min(56, width * 0.044));
+        const fontSize = Math.max(16, Math.min(26, width * 0.02)) + 'px';
         const bg = this.add.graphics();
 
         if (disabled) {
             bg.fillStyle(0x222233, 0.6);
-            bg.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
-            const label = this.add.text(x, y, text, {
-                fontSize: '22px',
+            bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+            this.add.text(x, y, text, {
+                fontSize: fontSize,
                 fontFamily: 'Arial',
                 fontStyle: 'bold',
                 color: '#444466'
             }).setOrigin(0.5);
-            this.add.text(x, y + 30, 'COMING SOON', {
-                fontSize: '11px', fontFamily: 'monospace', color: '#444466'
+            this.add.text(x, y + btnHeight * 0.54, 'COMING SOON', {
+                fontSize: Math.max(9, Math.min(11, width * 0.009)) + 'px', fontFamily: 'monospace', color: '#444466'
             }).setOrigin(0.5);
             return;
         }
 
         bg.fillStyle(0x4B0082, 0.8);
-        bg.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+        bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
         bg.lineStyle(2, 0x8B00FF, 1);
-        bg.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+        bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
 
         const label = this.add.text(x, y, text, {
-            fontSize: '26px',
+            fontSize: fontSize,
             fontFamily: 'Arial',
             fontStyle: 'bold',
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        const hitArea = this.add.rectangle(x, y, width, height).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+        const hitArea = this.add.rectangle(x, y, btnWidth, btnHeight).setInteractive({ useHandCursor: true }).setAlpha(0.001);
 
         hitArea.on('pointerover', () => {
             bg.clear();
             bg.fillStyle(0x6B20A2, 0.9);
-            bg.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+            bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
             bg.lineStyle(2, 0xC0C0C0, 1);
-            bg.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+            bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
             label.setScale(1.05);
         });
 
         hitArea.on('pointerout', () => {
             bg.clear();
             bg.fillStyle(0x4B0082, 0.8);
-            bg.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+            bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
             bg.lineStyle(2, 0x8B00FF, 1);
-            bg.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+            bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
             label.setScale(1);
         });
 
@@ -153,16 +172,17 @@ class MenuScene extends Phaser.Scene {
     }
 
     update(time) {
+        const { width, height } = this.cameras.main;
         for (const p of this.menuParticles) {
             p.phase += 0.01;
             p.sprite.x += p.vx + Math.sin(p.phase) * 0.3;
             p.sprite.y += p.vy;
             if (p.sprite.y < -10) {
-                p.sprite.y = 730;
-                p.sprite.x = Math.random() * 1280;
+                p.sprite.y = height + 10;
+                p.sprite.x = Math.random() * width;
             }
-            if (p.sprite.x < -10) p.sprite.x = 1290;
-            if (p.sprite.x > 1290) p.sprite.x = -10;
+            if (p.sprite.x < -10) p.sprite.x = width + 10;
+            if (p.sprite.x > width + 10) p.sprite.x = -10;
         }
     }
 }

@@ -7,11 +7,12 @@ class RhythmEngine {
         this.nextNoteIndex = 0;
         this.results = { perfect: 0, great: 0, good: 0, miss: 0, combo: 0, maxCombo: 0, score: 0 };
 
-        // Layout
-        this.trackY = config.trackY || 520;
-        this.trackHeight = config.trackHeight || 180;
-        this.trackWidth = 1280;
-        this.hitZoneX = config.hitZoneX || 160;
+        // Layout — all relative to viewport
+        const { width, height } = scene.cameras.main;
+        this.trackY = config.trackY || (height * 0.72);
+        this.trackHeight = config.trackHeight || (height * 0.19);
+        this.trackWidth = width;
+        this.hitZoneX = config.hitZoneX || (width * 0.125);
         this.laneHeight = this.trackHeight / this.laneCount;
         this.noteSpeed = config.noteSpeed || 450;
         this.spawnAheadTime = (this.trackWidth - this.hitZoneX + 100) / this.noteSpeed;
@@ -77,7 +78,7 @@ class RhythmEngine {
         for (let i = 0; i < this.laneCount; i++) {
             const ly = y + i * this.laneHeight + this.laneHeight / 2;
             hz.fillStyle(this.color, 0.12);
-            hz.fillCircle(this.hitZoneX, ly, 18);
+            hz.fillCircle(this.hitZoneX, ly, Math.min(18, this.laneHeight * 0.45));
         }
         this.container.add(hz);
 
@@ -88,30 +89,34 @@ class RhythmEngine {
         // Lane labels
         if (!this.isAI) {
             const keys = ['D', 'F', 'J', 'K'];
+            const lblSize = Math.max(11, Math.min(16, this.laneHeight * 0.47)) + 'px';
             for (let i = 0; i < 4; i++) {
                 const ly = y + i * this.laneHeight + this.laneHeight / 2;
                 const lbl = this.scene.add.text(this.hitZoneX, ly, keys[i], {
-                    fontSize: '16px', fontFamily: 'monospace', color: '#444466', fontStyle: 'bold'
+                    fontSize: lblSize, fontFamily: 'monospace', color: '#444466', fontStyle: 'bold'
                 }).setOrigin(0.5).setAlpha(0.6);
                 this.container.add(lbl);
             }
         } else {
             // AI label
+            const aiLblSize = Math.max(9, Math.min(12, this.trackHeight * 0.15)) + 'px';
             const lbl = this.scene.add.text(20, y + h / 2, this.label || 'AI', {
-                fontSize: '12px', fontFamily: 'monospace', color: this.colorHex
+                fontSize: aiLblSize, fontFamily: 'monospace', color: this.colorHex
             }).setOrigin(0, 0.5).setAlpha(0.5);
             this.container.add(lbl);
         }
 
         // Feedback text
+        const fbSize = Math.max(14, Math.min(24, this.trackHeight * 0.18)) + 'px';
         this.feedbackText = this.scene.add.text(this.hitZoneX + 90, y - 22, '', {
-            fontSize: '24px', fontFamily: 'Arial', fontStyle: 'bold'
+            fontSize: fbSize, fontFamily: 'Arial', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(120);
         this.container.add(this.feedbackText);
 
         // Combo text — more prominent
+        const comboSize = Math.max(14, Math.min(22, this.trackHeight * 0.16)) + 'px';
         this.comboText = this.scene.add.text(this.hitZoneX + 90, y + h + 22, '', {
-            fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif', fontStyle: 'bold', color: '#ffcc00',
+            fontSize: comboSize, fontFamily: 'Arial Black, Impact, sans-serif', fontStyle: 'bold', color: '#ffcc00',
             stroke: '#000000', strokeThickness: 3
         }).setOrigin(0.5).setDepth(120);
         this.container.add(this.comboText);
@@ -290,17 +295,13 @@ class RhythmEngine {
         bestNote.hit = true;
 
         // Organic AI: streaky behavior
-        // Track mood: AI goes through hot/cold streaks
-        if (!this._aiMood) this._aiMood = 0.6; // 0=terrible, 1=on fire
-        // Drift mood organically
-        this._aiMood += (Math.random() - 0.48) * 0.08; // slightly biased upward
+        if (!this._aiMood) this._aiMood = 0.6;
+        this._aiMood += (Math.random() - 0.48) * 0.08;
         this._aiMood = Phaser.Math.Clamp(this._aiMood, 0.15, 0.92);
 
-        // Combo affects mood: long combos = more confident, misses = nervous
         if (this.results.combo > 10) this._aiMood = Math.min(0.92, this._aiMood + 0.02);
         if (this.results.combo === 0) this._aiMood = Math.max(0.2, this._aiMood - 0.05);
 
-        // Accent notes are harder — mood penalty
         const isAccent = bestNote.type === 'accent';
         const effectiveMood = isAccent ? this._aiMood * 0.85 : this._aiMood;
 
@@ -319,7 +320,6 @@ class RhythmEngine {
         } else {
             this.results.combo = 0;
             this.showFeedback('MISS');
-            // Mood tanks after a miss
             this._aiMood = Math.max(0.2, this._aiMood - 0.1);
         }
 
@@ -368,31 +368,31 @@ class RhythmEngine {
 
     showHitEffect(note) {
         const laneY = this.trackY + note.lane * this.laneHeight + this.laneHeight / 2;
-        
+
         // Expanding ring - try to get from pool first
         let ring = this.hitEffectPool.pop();
         if (!ring) {
             ring = this.scene.add.circle(this.hitZoneX, laneY, 5, this.color, 0.8).setDepth(110);
         }
         ring.setPosition(this.hitZoneX, laneY).setScale(1).setAlpha(0.8);
-        
+
         this.scene.tweens.add({
             targets: ring,
             scaleX: 4, scaleY: 4, alpha: 0,
             duration: 250, ease: 'Power2',
-            onComplete: () => this.hitEffectPool.push(ring) // Return to pool
+            onComplete: () => this.hitEffectPool.push(ring)
         });
-        
-        // Flash on lane - also use pooling
+
+        // Flash on lane
         let flash = this.hitEffectPool.pop();
         if (!flash) {
             flash = this.scene.add.rectangle(this.hitZoneX, laneY, 80, this.laneHeight - 4, this.color, 0.2).setDepth(105);
         }
         flash.setPosition(this.hitZoneX, laneY).setAlpha(0.2);
-        
+
         this.scene.tweens.add({
             targets: flash, alpha: 0, duration: 150,
-            onComplete: () => this.hitEffectPool.push(flash) // Return to pool
+            onComplete: () => this.hitEffectPool.push(flash)
         });
     }
 
@@ -482,13 +482,13 @@ class RhythmEngine {
 
     destroy() {
         this.activeNotes.forEach(n => this.destroyNoteVisual(n));
-        
+
         // Clean up object pools
         this.hitEffectPool.forEach(obj => obj.destroy());
         this.noteVisualPool.forEach(obj => obj.destroy());
         this.hitEffectPool = [];
         this.noteVisualPool = [];
-        
+
         this.container.destroy();
     }
 }
